@@ -25,68 +25,68 @@ import heroBg from '@/assets/images/hero secion.png'
 ───────────────────────────────────────────────────────────────── */
 
 const NAV_LINKS = [
-  { label: 'Features',     href: '#features' },
+  { label: 'Features', href: '#features' },
   { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Pricing',      href: '#pricing' },
-  { label: 'Contact',      href: '#contact' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'Contact', href: '#contact' },
 ]
 
 const FEATURES = [
   {
-    icon:  <Package size={24} />,
+    icon: <Package size={24} />,
     color: '#fe6b00',
-    bg:    'rgba(254,107,0,0.08)',
+    bg: 'rgba(254,107,0,0.08)',
     title: 'Smart Parcel Tracking',
-    desc:  'Real-time GPS tracking with live status updates for every parcel across your network.',
+    desc: 'Real-time GPS tracking with live status updates for every parcel across your network.',
   },
   {
-    icon:  <BarChart3 size={24} />,
+    icon: <BarChart3 size={24} />,
     color: '#3e5e95',
-    bg:    'rgba(62,94,149,0.08)',
+    bg: 'rgba(62,94,149,0.08)',
     title: 'Analytics Dashboard',
-    desc:  'Deep insights into delivery performance, SLA compliance, and operational KPIs.',
+    desc: 'Deep insights into delivery performance, SLA compliance, and operational KPIs.',
   },
   {
-    icon:  <Truck size={24} />,
+    icon: <Truck size={24} />,
     color: '#31a69a',
-    bg:    'rgba(49,166,154,0.08)',
+    bg: 'rgba(49,166,154,0.08)',
     title: 'Fleet Management',
-    desc:  'Manage drivers, vehicles, and routes from a single intelligent control centre.',
+    desc: 'Manage drivers, vehicles, and routes from a single intelligent control centre.',
   },
   {
-    icon:  <Shield size={24} />,
+    icon: <Shield size={24} />,
     color: '#002d62',
-    bg:    'rgba(0,45,98,0.08)',
+    bg: 'rgba(0,45,98,0.08)',
     title: 'Secure Chain of Custody',
-    desc:  'Immutable audit logs and digital proof of delivery at every handoff point.',
+    desc: 'Immutable audit logs and digital proof of delivery at every handoff point.',
   },
   {
-    icon:  <Bell size={24} />,
+    icon: <Bell size={24} />,
     color: '#a04100',
-    bg:    'rgba(160,65,0,0.08)',
+    bg: 'rgba(160,65,0,0.08)',
     title: 'Automated Workflows',
-    desc:  'Trigger notifications, escalations, and route changes without lifting a finger.',
+    desc: 'Trigger notifications, escalations, and route changes without lifting a finger.',
   },
   {
-    icon:  <Globe size={24} />,
+    icon: <Globe size={24} />,
     color: '#005049',
-    bg:    'rgba(0,80,73,0.08)',
+    bg: 'rgba(0,80,73,0.08)',
     title: 'Multi-region Support',
-    desc:  'Operate across cities and countries with localised compliance and time zones.',
+    desc: 'Operate across cities and countries with localised compliance and time zones.',
   },
 ]
 
 const STEPS = [
-  { num: '01', color: '#fe6b00', title: 'Create Your Account',   desc: 'Sign up in seconds — no credit card required.' },
-  { num: '02', color: '#002d62', title: 'Add Fleet & Parcels',   desc: 'Import existing data or start fresh with guided onboarding.' },
-  { num: '03', color: '#31a69a', title: 'Go Live & Deliver',     desc: 'Activate live tracking and operate with full visibility.' },
+  { num: '01', color: '#fe6b00', title: 'Create Your Account', desc: 'Sign up in seconds — no credit card required.' },
+  { num: '02', color: '#002d62', title: 'Add Fleet & Parcels', desc: 'Import existing data or start fresh with guided onboarding.' },
+  { num: '03', color: '#31a69a', title: 'Go Live & Deliver', desc: 'Activate live tracking and operate with full visibility.' },
 ]
 
 const STATS = [
   { value: '99.9%', label: 'Uptime SLA' },
-  { value: '2M+',   label: 'Parcels Tracked' },
-  { value: '<2s',   label: 'Avg. Refresh' },
-  { value: '150+',  label: 'Enterprise Clients' },
+  { value: '2M+', label: 'Parcels Tracked' },
+  { value: '<2s', label: 'Avg. Refresh' },
+  { value: '150+', label: 'Enterprise Clients' },
 ]
 
 const FOOTER_LINKS = ['Terms of Service', 'Privacy Policy', 'Contact Support', 'Help Centre']
@@ -94,7 +94,7 @@ const FOOTER_LINKS = ['Terms of Service', 'Privacy Policy', 'Contact Support', '
 // ─────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [trackingId, setTrackingId] = useState('')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const navigate = useNavigate()

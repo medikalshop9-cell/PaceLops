@@ -21,6 +21,7 @@ import logoMark from '@/assets/images/parcelops_logo_mark.png'
 
 export function LoginForm({
   className,
+  onSignupClick,
   ...props
 }) {
   const [step, setStep] = useState('login')
@@ -98,7 +99,7 @@ export function LoginForm({
                     Login
                   </Button>
                   <FieldDescription className="text-center pt-2">
-                    Don&apos;t have an account? <a href="#" className="font-medium text-slate-900 hover:underline">Sign up</a>
+                    Don&apos;t have an account? <button type="button" onClick={onSignupClick} className="font-medium text-slate-900 hover:underline">Sign up</button>
                   </FieldDescription>
                 </Field>
               </FieldGroup>
