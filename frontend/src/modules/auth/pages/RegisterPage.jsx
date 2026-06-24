@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom'
-import { LoginForm } from '@/components/login-form'
+import { SignupForm } from '@/components/signup-form'
 import { AuthLayout } from '@/shared/layouts/AuthLayout'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate()
 
   return (
     <AuthLayout>
-      <LoginForm onSignupClick={() => navigate('/register')} />
+      <SignupForm onLoginClick={() => navigate('/login')} />
     </AuthLayout>
   )
 }
