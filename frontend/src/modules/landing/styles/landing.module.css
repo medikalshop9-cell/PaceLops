@@ -529,12 +529,32 @@
 
 
 /* ═══════════════════════════════════════
-   FEATURES GRID
+   FEATURES CAROUSEL (infinite marquee)
    ═══════════════════════════════════════ */
-.featuresGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.carouselTrack {
+  overflow: hidden;
+  /* bleed the horizontal padding of .container so cards go edge-to-edge */
+  margin-left:  calc(-1 * var(--gutter, 2rem));
+  margin-right: calc(-1 * var(--gutter, 2rem));
+  padding: 0.5rem 0 1.5rem;   /* room for card shadow */
+  /* pause when user hovers anywhere in the section */
+}
+.carouselTrack:hover .carouselInner {
+  animation-play-state: paused;
+}
+
+.carouselInner {
+  display: flex;
   gap: 1.5rem;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+  /* re-add side padding so first card isn't flush against viewport edge */
+  padding: 0 var(--gutter, 2rem);
 }
 
 .featureCard {
@@ -544,6 +564,9 @@
   padding: 2rem 1.75rem;
   transition: transform 0.35s var(--ease-out), box-shadow 0.35s ease;
   cursor: default;
+  /* keep each card the same width it had in the 3-col grid */
+  flex: 0 0 300px;
+  width: 300px;
 }
 .featureCard:hover {
   transform: translateY(-8px);
@@ -900,7 +923,7 @@
    RESPONSIVE
    ═══════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .featuresGrid { grid-template-columns: repeat(2, 1fr); }
+  /* carousel handles its own layout */
 }
 
 @media (max-width: 768px) {
@@ -929,7 +952,6 @@
   .trackRow { flex-direction: column; }
   .trackBtn { width: 100%; justify-content: center; }
 
-  .featuresGrid { grid-template-columns: 1fr; }
   .stepsRow { grid-template-columns: 1fr; gap: 1.5rem; }
   .stepConnector { display: none; }
 
@@ -952,4 +974,43 @@
   .ctaPrimary, .ctaSecondary { justify-content: center; }
   .statsGrid { grid-template-columns: 1fr; }
   .hero { min-height: 420px; padding: 3rem 1.5rem; }
+}
+
+/* ═══════════════════════════════════════
+   TRANSITION OVERLAY
+   ═══════════════════════════════════════ */
+.transitionOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--white);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.transitionTrack {
+  width: 100%;
+  max-width: 600px;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  border-radius: 2px;
+}
+
+.transitionTruck {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
+  color: var(--accent);
+  animation: driveTruck 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes driveTruck {
+  0% { left: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
 }

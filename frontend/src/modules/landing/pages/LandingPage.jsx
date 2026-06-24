@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Zap,
   Shield,
@@ -96,6 +96,15 @@ const FOOTER_LINKS = ['Terms of Service', 'Privacy Policy', 'Contact Support', '
 export default function LandingPage() {
   const [menuOpen,   setMenuOpen]   = useState(false)
   const [trackingId, setTrackingId] = useState('')
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const navigate = useNavigate()
+
+  const handleTransition = (path) => {
+    setIsTransitioning(true)
+    setTimeout(() => {
+      navigate(path)
+    }, 1500) // Duration of the truck animation
+  }
 
   return (
     <div className={s.page}>
@@ -116,8 +125,8 @@ export default function LandingPage() {
           </ul>
 
           <div className={s.navCta}>
-            <Link to="/login" className={s.btnGhost}>Sign In</Link>
-            <Link to="/login" className={s.btnAccent}>Get Started</Link>
+            <button onClick={() => handleTransition('/login')} className={s.btnGhost}>Sign In</button>
+            <button onClick={() => handleTransition('/login')} className={s.btnAccent}>Get Started</button>
           </div>
 
           <button
@@ -137,8 +146,8 @@ export default function LandingPage() {
               </a>
             ))}
             <div className={s.mobileDivider}>
-              <Link to="/login" className={s.mobileBtnGhost}>Sign In</Link>
-              <Link to="/login" className={s.mobileBtnAccent}>Get Started</Link>
+              <button onClick={() => handleTransition('/login')} className={s.mobileBtnGhost}>Sign In</button>
+              <button onClick={() => handleTransition('/login')} className={s.mobileBtnAccent}>Get Started</button>
             </div>
           </div>
         )}
@@ -167,9 +176,9 @@ export default function LandingPage() {
             </p>
 
             <div className={s.heroCtas}>
-              <Link to="/login" className={s.ctaPrimary}>
+              <button onClick={() => handleTransition('/login')} className={s.ctaPrimary}>
                 Get Started Free <ArrowRight size={17} />
-              </Link>
+              </button>
               <a href="#how-it-works" className={s.ctaSecondary}>
                 See How It Works
               </a>
@@ -225,16 +234,18 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className={s.featuresGrid}>
-              {FEATURES.map(({ icon, color, bg, title, desc }) => (
-                <div key={title} className={s.featureCard}>
-                  <div className={s.featureIconWrap} style={{ background: bg, color }}>
-                    {icon}
+            <div className={s.carouselTrack}>
+              <div className={s.carouselInner}>
+                {[...FEATURES, ...FEATURES].map(({ icon, color, bg, title, desc }, i) => (
+                  <div key={i} className={s.featureCard}>
+                    <div className={s.featureIconWrap} style={{ background: bg, color }}>
+                      {icon}
+                    </div>
+                    <h3 className={s.featureTitle}>{title}</h3>
+                    <p className={s.featureDesc}>{desc}</p>
                   </div>
-                  <h3 className={s.featureTitle}>{title}</h3>
-                  <p className={s.featureDesc}>{desc}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -291,9 +302,9 @@ export default function LandingPage() {
               Join hundreds of businesses delivering smarter, faster, and more reliably with ParceLops.
             </p>
             <div className={s.ctaBannerActions}>
-              <Link to="/login" className={s.ctaBannerPrimary}>
+              <button onClick={() => handleTransition('/login')} className={s.ctaBannerPrimary}>
                 Start For Free <ArrowRight size={17} />
-              </Link>
+              </button>
               <a href="#features" className={s.ctaBannerSecondary}>
                 <CheckCircle2 size={17} />
                 Explore Features
@@ -321,6 +332,15 @@ export default function LandingPage() {
           </ul>
         </div>
       </footer>
+
+      {/* ══ TRANSITION OVERLAY ══════════════════════════════════════ */}
+      {isTransitioning && (
+        <div className={s.transitionOverlay}>
+          <div className={s.transitionTrack}>
+            <Truck size={48} className={s.transitionTruck} />
+          </div>
+        </div>
+      )}
 
     </div>
   )
