@@ -3,6 +3,7 @@ import { Link, useLocation, Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import { ModeToggle } from '@/components/mode-toggle'
+import { NotificationsDrawer } from '@/components/notifications-drawer'
 import {
   Menu,
   LayoutDashboard,
@@ -193,10 +194,12 @@ export function CustomerLayout() {
 
           <div className="flex items-center gap-4 sm:gap-6">
             <ModeToggle />
-            <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 border-background" />
-            </button>
+            <NotificationsDrawer>
+              <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 border-background" />
+              </button>
+            </NotificationsDrawer>
             <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-border">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-foreground">Sarah Jenkins</p>
