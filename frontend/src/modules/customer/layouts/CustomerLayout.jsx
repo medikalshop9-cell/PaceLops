@@ -147,7 +147,7 @@ export function CustomerLayout() {
       {/* Mobile Menu Backdrop */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 bg-[#0B1020]/80 backdrop-blur-sm z-50 transition-opacity lg:hidden"
+          className="fixed inset-0 bg-[#0B1020]/80 backdrop-blur-sm z-40 transition-opacity lg:hidden"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
