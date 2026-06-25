@@ -48,7 +48,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
       }
 
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/dashboard");
+      navigate("/customer/dashboard");
     } catch (err) {
       setError(err.message);
     } finally {

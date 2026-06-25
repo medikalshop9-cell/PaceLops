@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ export function SignupForm({
   onLoginClick,
   ...props
 }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -73,6 +75,7 @@ export function SignupForm({
           password: "",
           confirm_password: "",
         });
+        navigate("/customer");
       } else {
         alert(data.message || "Signup failed");
       }
