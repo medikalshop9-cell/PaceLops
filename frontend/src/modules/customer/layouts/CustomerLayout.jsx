@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import {
   Menu,
   LayoutDashboard,
@@ -61,9 +62,7 @@ export function CustomerLayout() {
       {/* Brand */}
       <div className="flex items-center h-20 px-8">
         <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF7A00] to-[#E05E00] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#FF7A00]/20">
-            P
-          </div>
+          <img src={logoMark} alt="ParcelOps Logo" className="w-8 h-8 object-contain" />
           PARCELOPS
         </span>
       </div>

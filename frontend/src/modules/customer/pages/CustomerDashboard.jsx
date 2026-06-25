@@ -14,11 +14,11 @@ export default function CustomerDashboard() {
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#FF7A00]/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row justify-between gap-6 h-full items-center">
+        <div className="relative z-10 flex flex-row justify-between gap-4 md:gap-6 h-full items-center">
           {/* Left Stats */}
-          <div className="flex flex-col justify-center">
-            <p className="text-slate-400 text-sm font-medium tracking-wide mb-1.5">Active shipments</p>
-            <p className="text-5xl lg:text-7xl font-bold text-white tracking-tight mb-2">3</p>
+          <div className="flex flex-col justify-center items-start text-left">
+            <p className="text-slate-400 text-xs md:text-sm font-medium tracking-wide mb-1 md:mb-1.5">Active shipments</p>
+            <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-white tracking-tight mb-1.5 md:mb-2">3</p>
             <div className="flex items-center gap-2 text-slate-300 text-sm">
               <span className="text-white">In transit</span>
               <div className="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center opacity-70">
@@ -28,18 +28,18 @@ export default function CustomerDashboard() {
           </div>
 
           {/* Center 3D Visualization */}
-          <div className="relative flex-1 flex justify-center items-center py-2 md:-my-6 pointer-events-none">
+          <div className="relative flex-1 hidden md:flex justify-center items-center -my-2 md:-my-6 pointer-events-none">
             <img
               src={truckViz}
               alt="Logistics Visualization"
-              className="h-[200px] md:h-[260px] w-auto object-contain drop-shadow-2xl mix-blend-screen"
+              className="h-[140px] md:h-[260px] w-auto object-contain drop-shadow-2xl mix-blend-screen"
             />
           </div>
 
           {/* Right Stats */}
-          <div className="flex flex-col justify-center items-start md:items-end text-left md:text-right">
-            <p className="text-slate-400 text-sm font-medium tracking-wide mb-1.5">Delivered this month</p>
-            <p className="text-5xl lg:text-7xl font-bold text-white tracking-tight mb-2">27</p>
+          <div className="flex flex-col justify-center items-end text-right">
+            <p className="text-slate-400 text-xs md:text-sm font-medium tracking-wide mb-1 md:mb-1.5">Delivered this month</p>
+            <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-white tracking-tight mb-1.5 md:mb-2">27</p>
             <p className="text-emerald-400 text-sm font-medium flex items-center gap-1.5">
               <span className="text-emerald-400">+18%</span> vs last month
               <ArrowRight className="w-3.5 h-3.5 -rotate-45" />
@@ -110,7 +110,7 @@ export default function CustomerDashboard() {
               </div>
 
               {/* Progress Line */}
-              <div className="flex-1 w-full px-2 md:px-8 relative">
+              <div className="flex-1 px-2 md:px-8 relative">
                 <div className="flex justify-end items-center mb-3 pr-2">
                   <span className="px-3 py-1 bg-[#FF7A00]/10 text-[#FF7A00] text-xs font-medium rounded-full border border-[#FF7A00]/20">In transit</span>
                 </div>
@@ -158,7 +158,7 @@ export default function CustomerDashboard() {
                 </div>
               </div>
 
-              <div className="flex-1 w-full flex justify-end md:justify-center">
+              <div className="flex-1 flex justify-end md:justify-center">
                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-xs font-medium rounded-full border border-emerald-500/20">Delivered</span>
               </div>
 
