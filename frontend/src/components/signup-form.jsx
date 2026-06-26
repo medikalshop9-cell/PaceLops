@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import logoMark from "@/assets/images/parcelops_logo_mark.png";
+import { LoadingTransition } from "@/shared/components/LoadingTransition/LoadingTransition";
 
 export function SignupForm({
   className,
@@ -32,6 +33,7 @@ export function SignupForm({
   });
 
   const [loading, setLoading] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -75,7 +77,10 @@ export function SignupForm({
           password: "",
           confirm_password: "",
         });
-        navigate("/customer");
+        setIsNavigating(true);
+        setTimeout(() => {
+          navigate("/customer");
+        }, 1500);
       } else {
         alert(data.message || "Signup failed");
       }
@@ -338,6 +343,8 @@ export function SignupForm({
           Privacy Policy
         </a>.
       </FieldDescription>
+
+      <LoadingTransition isVisible={isNavigating} message="Creating your account..." />
     </div>
   );
 }

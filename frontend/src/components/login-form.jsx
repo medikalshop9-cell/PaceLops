@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import logoMark from "@/assets/images/parcelops_logo_mark.png";
+import { LoadingTransition } from "@/shared/components/LoadingTransition/LoadingTransition";
 
 export function LoginForm({ className, onSignupClick, ...props }) {
   const [step, setStep] = useState("login"); // 'login' | 'otp-email'
@@ -25,6 +26,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
   const [password, setPassword] = useState("");
   const [otpEmail, setOtpEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -48,7 +50,10 @@ export function LoginForm({ className, onSignupClick, ...props }) {
       }
 
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/customer/dashboard");
+      setIsNavigating(true);
+      setTimeout(() => {
+        navigate("/customer/dashboard");
+      }, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -267,6 +272,8 @@ export function LoginForm({ className, onSignupClick, ...props }) {
           Privacy Policy
         </a>.
       </FieldDescription>
+
+      <LoadingTransition isVisible={isNavigating} message="Authenticating..." />
     </div>
   );
 }
