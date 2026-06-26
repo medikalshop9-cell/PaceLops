@@ -100,7 +100,7 @@ export function SignupForm({
               alt="ParcelOps"
               className="w-7 h-7 object-contain"
             />
-            <span className="text-xl font-semibold tracking-tight text-slate-900">
+            <span className="text-xl font-semibold tracking-tight text-foreground">
               ParcelOps
             </span>
           </div>
@@ -174,7 +174,7 @@ export function SignupForm({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-slate-900"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -234,7 +234,7 @@ export function SignupForm({
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-slate-900"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
                     {showConfirmPassword ? (
@@ -279,7 +279,7 @@ export function SignupForm({
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="h-10 w-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-colors"
+                    className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors font-semibold"
                   >
                     {loading
                       ? "Creating Account..."
@@ -289,7 +289,7 @@ export function SignupForm({
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full mt-2"
+                    className="h-10 w-full mt-2 bg-background hover:bg-accent text-foreground"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -310,7 +310,7 @@ export function SignupForm({
                     <button
                       type="button"
                       onClick={onLoginClick}
-                      className="font-medium text-slate-900 hover:underline"
+                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors"
                     >
                       Sign in
                     </button>
@@ -326,14 +326,14 @@ export function SignupForm({
         By clicking create account, you agree to our{" "}
         <a
           href="#"
-          className="underline hover:text-slate-900"
+          className="underline hover:text-foreground"
         >
           Terms of Service
         </a>{" "}
         and{" "}
         <a
           href="#"
-          className="underline hover:text-slate-900"
+          className="underline hover:text-foreground"
         >
           Privacy Policy
         </a>.

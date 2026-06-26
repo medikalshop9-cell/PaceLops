@@ -79,7 +79,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2.5 pb-2">
             <img src={logoMark} alt="ParcelOps" className="w-7 h-7 object-contain" />
-            <span className="text-xl font-semibold tracking-tight text-slate-900">ParcelOps</span>
+            <span className="text-xl font-semibold tracking-tight text-foreground">ParcelOps</span>
           </div>
           <CardTitle className="text-[20px] font-medium">Welcome back</CardTitle>
           <CardDescription>
@@ -97,7 +97,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full"
+                    className="h-10 w-full bg-background hover:bg-accent text-foreground"
                     onClick={handleAppleLogin}
                   >
                     <svg
@@ -115,7 +115,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full mt-2"
+                    className="h-10 w-full mt-2 bg-background hover:bg-accent text-foreground"
                     onClick={handleGoogleLogin}
                   >
                     <svg
@@ -133,7 +133,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full mt-2 border-[#fe6b00]/30 hover:border-[#fe6b00]/50 hover:bg-[#fe6b00]/5 text-[#fe6b00]"
+                    className="h-10 w-full mt-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary"
                     onClick={handleOtpClick}
                   >
                     <svg
@@ -178,7 +178,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                     <FieldLabel htmlFor="password">Password</FieldLabel>
                     <a
                       href="#"
-                      className="ml-auto text-sm text-[#fe6b00] underline-offset-4 hover:underline"
+                      className="ml-auto text-sm text-primary underline-offset-4 hover:underline"
                     >
                       Forgot your password?
                     </a>
@@ -203,7 +203,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                 <Field>
                   <Button
                     type="submit"
-                    className="h-10 w-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-colors"
+                    className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors font-semibold"
                     disabled={loading}
                   >
                     {loading ? "Logging in..." : "Login"}
@@ -213,7 +213,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                     <button
                       type="button"
                       onClick={onSignupClick}
-                      className="font-medium text-slate-900 hover:underline"
+                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors"
                     >
                       Sign up
                     </button>
@@ -239,7 +239,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                 <Field className="pt-2">
                   <Button
                     type="submit"
-                    className="h-10 w-full bg-[#fe6b00] text-white hover:bg-[#e05e00] shadow-sm transition-colors"
+                    className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors font-semibold"
                   >
                     Send Code
                   </Button>
@@ -259,11 +259,11 @@ export function LoginForm({ className, onSignupClick, ...props }) {
       </Card>
       <FieldDescription className="px-6 text-center text-xs text-muted-foreground/80">
         By clicking continue, you agree to our{" "}
-        <a href="#" className="underline hover:text-slate-900">
+        <a href="#" className="underline hover:text-foreground">
           Terms of Service
         </a>{" "}
         and{" "}
-        <a href="#" className="underline hover:text-slate-900">
+        <a href="#" className="underline hover:text-foreground">
           Privacy Policy
         </a>.
       </FieldDescription>
