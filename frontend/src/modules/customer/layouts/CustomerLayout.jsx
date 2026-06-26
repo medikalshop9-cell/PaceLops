@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import { ModeToggle } from '@/components/mode-toggle'
 import { NotificationsDrawer } from '@/components/notifications-drawer'
+import { useAuthStore } from '@/store/useAuthStore'
 import {
   Menu,
   LayoutDashboard,
@@ -56,6 +57,7 @@ const sidebarSections = [
 export function CustomerLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
+  const { user } = useAuthStore()
 
   const currentPath = location.pathname === '/customer' ? '/customer/dashboard' : location.pathname
 
@@ -202,12 +204,16 @@ export function CustomerLayout() {
             </NotificationsDrawer>
             <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-border">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-foreground">Sarah Jenkins</p>
-                <p className="text-xs text-muted-foreground">sarah@example.com</p>
+                <p className="text-sm font-semibold text-foreground">{user?.fullName}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <button className="w-10 h-10 rounded-full bg-muted p-0.5 ring-2 ring-border hover:ring-primary/20 transition-all">
                 <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
-                  <span className="text-sm font-bold text-foreground">SJ</span>
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-bold text-foreground">{user?.initials}</span>
+                  )}
                 </div>
               </button>
             </div>

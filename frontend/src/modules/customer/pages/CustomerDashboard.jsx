@@ -1,9 +1,52 @@
+import { useState, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { PackagePlus, Calculator, Map, Headset, Truck, CheckCircle2, ArrowRight, TrendingUp, MoreVertical } from 'lucide-react'
 import truckViz from '@/assets/images/Transparent 3D.png'
+import { useAuthStore } from '@/store/useAuthStore'
+
+const initialShipments = [
+  {
+    id: 'PCL-4821',
+    origin: 'Asafo',
+    destination: 'Accra-Circle',
+    status: 'in_transit',
+    eta: 'Tomorrow, 10:30 AM',
+    totalDistance: 100,
+    coveredDistance: 10,
+  },
+  {
+    id: 'PCL-4790',
+    origin: 'Lagos',
+    destination: 'Ibadan',
+    status: 'delivered',
+    deliveredOn: 'May 24, 2024, 2:45 PM',
+    totalDistance: 100,
+    coveredDistance: 100,
+  }
+]
 
 export default function CustomerDashboard() {
   const { setIsMenuOpen } = useOutletContext()
+  const { user } = useAuthStore()
+
+  // Real-time tracking simulation
+  const [shipments, setShipments] = useState(initialShipments)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShipments(prev => prev.map(shipment => {
+        if (shipment.status === 'in_transit' && shipment.coveredDistance < shipment.totalDistance) {
+          return {
+            ...shipment,
+            coveredDistance: Math.min(shipment.coveredDistance + 2, shipment.totalDistance)
+          }
+        }
+        return shipment
+      }))
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="py-8 space-y-10 pb-24">
@@ -95,85 +138,79 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="space-y-4">
-          {/* Active Shipment Card */}
-          <div className="group bg-card backdrop-blur-sm rounded-[24px] p-6 border border-border hover:border-primary/30 transition-all shadow-sm hover:shadow-md relative overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between gap-6 items-center">
+          {shipments.map(shipment => {
+            const isDelivered = shipment.status === 'delivered';
+            const progress = (shipment.coveredDistance / shipment.totalDistance) * 100;
 
-              <div className="flex items-center gap-5 w-full md:w-1/4">
-                <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center shrink-0 border border-border">
-                  <Truck className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-lg text-foreground mb-0.5 tracking-tight">PCL-4821</h4>
-                  <p className="text-xs font-medium text-muted-foreground">Asafo → Accra-Circle</p>
-                </div>
-              </div>
+            return (
+              <div 
+                key={shipment.id} 
+                className={`group backdrop-blur-sm rounded-[24px] p-6 border border-border transition-all relative overflow-hidden ${
+                  isDelivered 
+                    ? 'bg-muted/30 hover:border-primary/30 shadow-sm hover:shadow-md' 
+                    : 'bg-card hover:border-primary/30 shadow-sm hover:shadow-md'
+                }`}
+              >
+                <div className="flex flex-col md:flex-row justify-between gap-6 items-center">
 
-              {/* Progress Line */}
-              <div className="flex-1 px-2 md:px-8 relative">
-                <div className="flex justify-end items-center mb-3 pr-2">
-                  <span className="px-3 py-1 bg-[#FF7A00]/10 text-[#FF7A00] text-xs font-medium rounded-full border border-[#FF7A00]/20">In transit</span>
-                </div>
-                <div className="relative">
-                  <div className="flex justify-between items-center text-xs text-muted-foreground mb-2">
-                    <span>Asafo</span>
-                    <span>Accra-Circle</span>
-                  </div>
-                  <div className="relative h-1 bg-muted rounded-full flex items-center">
-                    <div className="absolute left-0 h-full bg-primary rounded-full" style={{ width: '60%' }}></div>
-                    <div className="absolute left-0 w-2 h-2 bg-primary rounded-full -ml-1"></div>
-
-                    <div className="absolute w-5 h-5 bg-card text-primary flex items-center justify-center rounded-full -mt-0.5 z-10 shadow-lg shadow-primary/20 border border-primary/30" style={{ left: '60%', transform: 'translateX(-50%)' }}>
-                      <Truck className="w-3 h-3 fill-current" />
+                  <div className="flex items-center gap-5 w-full md:w-1/4">
+                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center shrink-0 border border-border">
+                      {isDelivered ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Truck className="w-6 h-6 text-primary" />}
                     </div>
-
-                    <div className="absolute right-0 w-2 h-2 bg-border rounded-full -mr-1"></div>
+                    <div>
+                      <h4 className="font-bold text-lg text-foreground mb-0.5 tracking-tight">{shipment.id}</h4>
+                      <p className="text-xs font-medium text-muted-foreground">{shipment.origin} → {shipment.destination}</p>
+                    </div>
                   </div>
+
+                  {/* Progress Line */}
+                  <div className="flex-1 px-2 md:px-8 relative">
+                    <div className="flex justify-end items-center mb-3 pr-2">
+                      {isDelivered ? (
+                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-xs font-medium rounded-full border border-emerald-500/20">Delivered</span>
+                      ) : (
+                        <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">In transit</span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <div className="flex justify-between items-center text-xs text-muted-foreground mb-2">
+                        <span>{shipment.origin}</span>
+                        <span>{shipment.destination}</span>
+                      </div>
+                      <div className="relative h-1 bg-muted rounded-full flex items-center">
+                        <div className="absolute left-0 h-full bg-primary rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }}></div>
+                        <div className="absolute left-0 w-2 h-2 bg-primary rounded-full -ml-1"></div>
+
+                        <div 
+                          className="absolute w-5 h-5 bg-card text-primary flex items-center justify-center rounded-full -mt-0.5 z-10 shadow-lg shadow-primary/20 border border-primary/30 transition-all duration-1000 ease-linear" 
+                          style={{ left: `${progress}%`, transform: 'translateX(-50%)' }}
+                        >
+                          {isDelivered ? <CheckCircle2 className="w-3 h-3 fill-current text-emerald-500" /> : <Truck className="w-3 h-3 fill-current" />}
+                        </div>
+
+                        <div className="absolute right-0 w-2 h-2 bg-border rounded-full -mr-1"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between w-full md:w-1/4 text-right">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {isDelivered ? 'Delivered on' : 'ETA'}
+                      </p>
+                      <p className="text-sm text-foreground">
+                        {isDelivered ? shipment.deliveredOn : shipment.eta}
+                      </p>
+                    </div>
+                    <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </div>
+
                 </div>
               </div>
-
-              <div className="flex items-center justify-between w-full md:w-1/4 text-right">
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground mb-1">ETA</p>
-                  <p className="text-sm text-foreground">Tomorrow, 10:30 AM</p>
-                </div>
-                <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Delivered Shipment Card */}
-          <div className="group bg-muted/30 rounded-[24px] p-6 border border-border hover:border-primary/30 transition-all shadow-sm hover:shadow-md relative overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between gap-6 items-center">
-
-              <div className="flex items-center gap-5 w-full md:w-1/4">
-                <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center shrink-0 border border-border">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-lg text-foreground mb-0.5 tracking-tight">PCL-4790</h4>
-                  <p className="text-xs font-medium text-muted-foreground">Lagos → Ibadan</p>
-                </div>
-              </div>
-
-              <div className="flex-1 flex justify-end md:justify-center">
-                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-xs font-medium rounded-full border border-emerald-500/20">Delivered</span>
-              </div>
-
-              <div className="flex items-center justify-between w-full md:w-1/4 text-right">
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground mb-1">Delivered on</p>
-                  <p className="text-sm text-foreground">May 24, 2024, 2:45 PM</p>
-                </div>
-                <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
+            )
+          })}
         </div>
       </div>
     </div>
