@@ -35,10 +35,6 @@ export const customerRoutes = [
         path: 'history',
         element: <div className="p-6">History Page Placeholder</div>,
       },
-      {
-        path: 'notifications',
-        element: <div className="p-6">Notifications Page Placeholder</div>,
-      },
     ],
   },
 ]

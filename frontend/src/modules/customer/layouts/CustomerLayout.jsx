@@ -97,19 +97,35 @@ export function CustomerLayout() {
               {section.links.map((link) => {
                 const Icon = link.icon
                 const isActive = currentPath.startsWith(link.path)
+                
+                const linkClasses = cn(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 font-medium text-[14px]",
+                  isActive
+                    ? "bg-muted text-primary shadow-sm ring-1 ring-border"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )
+                
+                const iconClasses = cn("w-4 h-4", isActive ? "text-[#FF7A00]" : "text-slate-500")
+
+                if (link.name === 'Notifications') {
+                  return (
+                    <NotificationsDrawer key={link.name}>
+                      <button className={cn(linkClasses, "w-full")}>
+                        <Icon className={iconClasses} />
+                        {link.name}
+                      </button>
+                    </NotificationsDrawer>
+                  )
+                }
+
                 return (
                   <Link
                     key={link.name}
                     to={link.path}
                     onClick={() => setIsMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 font-medium text-[14px]",
-                      isActive
-                        ? "bg-muted text-primary shadow-sm ring-1 ring-border"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                    )}
+                    className={linkClasses}
                   >
-                    <Icon className={cn("w-4 h-4", isActive ? "text-[#FF7A00]" : "text-slate-500")} />
+                    <Icon className={iconClasses} />
                     {link.name}
                   </Link>
                 )

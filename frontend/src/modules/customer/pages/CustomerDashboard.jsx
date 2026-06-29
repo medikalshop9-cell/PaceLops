@@ -123,7 +123,11 @@ export default function CustomerDashboard() {
       </div>
 
       {/* Quick Action Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h3 className="text-xl font-bold text-foreground tracking-tight">Quick Actions</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[
           { icon: PackagePlus, title: 'Ship a Parcel', desc: 'Create a new shipment', primary: true, path: '/customer/new-shipment' },
           { icon: MapPin, title: 'Track Parcel', desc: 'Track your shipments real-time', path: '/customer/track' },
@@ -157,6 +161,7 @@ export default function CustomerDashboard() {
             </div>
           )
         })}
+        </div>
       </div>
 
       {/* Recent Activity Feed */}
