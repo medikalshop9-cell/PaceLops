@@ -27,7 +27,10 @@ const initialShipments = [
 
 export default function CustomerDashboard() {
   const { setIsMenuOpen } = useOutletContext()
-  const { user } = useAuthStore()
+ // const { user } = useAuthStore()
+
+
+ const user = JSON.parse(localStorage.getItem("user"));
 
   // Real-time tracking simulation
   const [shipments, setShipments] = useState(initialShipments)
@@ -60,15 +63,32 @@ export default function CustomerDashboard() {
         <div className="relative z-10 flex flex-row justify-between gap-4 md:gap-6 h-full items-center">
           {/* Left Stats */}
           <div className="flex flex-col justify-center items-start text-left">
-            <p className="text-muted-foreground text-xs md:text-sm font-medium tracking-wide mb-1 md:mb-1.5">Active shipments</p>
-            <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground tracking-tight mb-1.5 md:mb-2">3</p>
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <span className="text-foreground">In transit</span>
-              <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center opacity-70">
-                <ArrowRight className="w-2.5 h-2.5 -rotate-45" />
-              </div>
-            </div>
-          </div>
+  <p className="text-sm text-muted-foreground">
+    Welcome back,
+  </p>
+
+  <h2 className="text-2xl md:text-4xl font-bold text-foreground">
+    {user?.full_name}
+  </h2>
+
+  <div className="mt-6">
+    <p className="text-muted-foreground text-xs md:text-sm font-medium tracking-wide">
+      Active Shipments
+    </p>
+
+    <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mt-2">
+      3
+    </p>
+
+    <div className="flex items-center gap-2 mt-2 text-muted-foreground text-sm">
+      <span className="text-foreground">In Transit</span>
+
+      <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center">
+        <ArrowRight className="w-2.5 h-2.5 -rotate-45" />
+      </div>
+    </div>
+  </div>
+</div>
 
           {/* Center 3D Visualization */}
           <div className="relative flex-1 hidden md:flex justify-center items-center -my-2 md:-my-6 pointer-events-none">
