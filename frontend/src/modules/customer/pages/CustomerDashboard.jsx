@@ -1,55 +1,51 @@
 import { useState, useEffect } from 'react'
-import { useOutletContext } from 'react-router-dom'
-import { PackagePlus, Calculator, Map, Headset, Truck, CheckCircle2, ArrowRight, TrendingUp, MoreVertical } from 'lucide-react'
+import { useOutletContext, useNavigate } from 'react-router-dom'
+import { PackagePlus, MapPin, CalendarDays, Truck, CheckCircle2, ArrowRight, MoreVertical, AlertCircle, RefreshCw, Box, Activity, CreditCard } from 'lucide-react'
 import truckViz from '@/assets/images/Transparent 3D.png'
-import { useAuthStore } from '@/store/useAuthStore'
-
-const initialShipments = [
-  {
-    id: 'PCL-4821',
-    origin: 'Asafo',
-    destination: 'Accra-Circle',
-    status: 'in_transit',
-    eta: 'Tomorrow, 10:30 AM',
-    totalDistance: 100,
-    coveredDistance: 10,
-  },
-  {
-    id: 'PCL-4790',
-    origin: 'Lagos',
-    destination: 'Ibadan',
-    status: 'delivered',
-    deliveredOn: 'May 24, 2024, 2:45 PM',
-    totalDistance: 100,
-    coveredDistance: 100,
-  }
-]
+import { dashboardService } from '../services/dashboard.service'
 
 export default function CustomerDashboard() {
   const { setIsMenuOpen } = useOutletContext()
- // const { user } = useAuthStore()
+  const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem("user"))
 
+  const [stats, setStats] = useState(null)
+  const [activities, setActivities] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
- const user = JSON.parse(localStorage.getItem("user"));
-
-  // Real-time tracking simulation
-  const [shipments, setShipments] = useState(initialShipments)
+  const fetchDashboardData = async () => {
+    if (!user?.id) return;
+    
+    setIsLoading(true)
+    setError(null)
+    try {
+      const [statsData, activitiesData] = await Promise.all([
+        dashboardService.getStats(user.id),
+        dashboardService.getRecentActivities(user.id)
+      ])
+      setStats(statsData)
+      setActivities(activitiesData)
+    } catch (err) {
+      setError(err.message || 'Failed to load dashboard data')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setShipments(prev => prev.map(shipment => {
-        if (shipment.status === 'in_transit' && shipment.coveredDistance < shipment.totalDistance) {
-          return {
-            ...shipment,
-            coveredDistance: Math.min(shipment.coveredDistance + 2, shipment.totalDistance)
-          }
-        }
-        return shipment
-      }))
-    }, 2000)
-
-    return () => clearInterval(interval)
+    fetchDashboardData()
   }, [])
+
+  // Helper to get activity icon
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case 'parcel_update': return <Truck className="w-5 h-5 text-blue-500" />
+      case 'payment': return <CreditCard className="w-5 h-5 text-emerald-500" />
+      case 'delivery_request': return <PackagePlus className="w-5 h-5 text-primary" />
+      default: return <Activity className="w-5 h-5 text-muted-foreground" />
+    }
+  }
 
   return (
     <div className="py-8 space-y-10 pb-24">
@@ -63,32 +59,45 @@ export default function CustomerDashboard() {
         <div className="relative z-10 flex flex-row justify-between gap-4 md:gap-6 h-full items-center">
           {/* Left Stats */}
           <div className="flex flex-col justify-center items-start text-left">
-  <p className="text-sm text-muted-foreground">
-    Welcome back,
-  </p>
+            <p className="text-sm text-muted-foreground">
+              Welcome back,
+            </p>
 
-  <h2 className="text-2xl md:text-4xl font-bold text-foreground">
-    {user?.full_name}
-  </h2>
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground">
+              {user?.full_name || 'User'}
+            </h2>
 
-  <div className="mt-6">
-    <p className="text-muted-foreground text-xs md:text-sm font-medium tracking-wide">
-      Active Shipments
-    </p>
+            <div className="mt-6">
+              <p className="text-muted-foreground text-xs md:text-sm font-medium tracking-wide">
+                Total Parcels
+              </p>
 
-    <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mt-2">
-      3
-    </p>
+              {isLoading ? (
+                <div className="h-12 w-20 bg-muted animate-pulse rounded-lg mt-2"></div>
+              ) : error ? (
+                <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mt-2">-</p>
+              ) : (
+                <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mt-2">
+                  {stats?.totalParcels || 0}
+                </p>
+              )}
 
-    <div className="flex items-center gap-2 mt-2 text-muted-foreground text-sm">
-      <span className="text-foreground">In Transit</span>
-
-      <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center">
-        <ArrowRight className="w-2.5 h-2.5 -rotate-45" />
-      </div>
-    </div>
-  </div>
-</div>
+              <div className="flex items-center gap-2 mt-2 text-muted-foreground text-sm">
+                {isLoading ? (
+                  <div className="h-4 w-32 bg-muted animate-pulse rounded"></div>
+                ) : (
+                  <>
+                    <span className="text-foreground">
+                      {stats?.inTransit || 0} Parcels In Transit / Ready
+                    </span>
+                    <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center">
+                      <ArrowRight className="w-2.5 h-2.5 -rotate-45" />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Center 3D Visualization */}
           <div className="relative flex-1 hidden md:flex justify-center items-center -my-2 md:-my-6 pointer-events-none">
@@ -101,28 +110,30 @@ export default function CustomerDashboard() {
 
           {/* Right Stats */}
           <div className="flex flex-col justify-center items-end text-right">
-            <p className="text-muted-foreground text-xs md:text-sm font-medium tracking-wide mb-1 md:mb-1.5">Delivered this month</p>
-            <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground tracking-tight mb-1.5 md:mb-2">27</p>
-            <p className="text-emerald-400 text-sm font-medium flex items-center gap-1.5">
-              <span className="text-emerald-400">+18%</span> vs last month
-              <ArrowRight className="w-3.5 h-3.5 -rotate-45" />
-            </p>
+            <p className="text-muted-foreground text-xs md:text-sm font-medium tracking-wide mb-1 md:mb-1.5">Delivered Parcels</p>
+            {isLoading ? (
+              <div className="h-12 w-24 bg-muted animate-pulse rounded-lg mb-1.5"></div>
+            ) : error ? (
+              <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground tracking-tight mb-1.5 md:mb-2">-</p>
+            ) : (
+              <p className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground tracking-tight mb-1.5 md:mb-2">{stats?.delivered || 0}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Action Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Quick Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[
-          { icon: PackagePlus, title: 'New Shipment', desc: 'Create a new shipment', primary: true },
-          { icon: Calculator, title: 'Get Estimate', desc: 'Calculate shipping cost' },
-          { icon: Map, title: 'Find Branch', desc: 'Locate nearest branch' },
-          { icon: Headset, title: 'Support', desc: 'Get help & support' },
+          { icon: PackagePlus, title: 'Ship a Parcel', desc: 'Create a new shipment', primary: true, path: '/customer/new-shipment' },
+          { icon: MapPin, title: 'Track Parcel', desc: 'Track your shipments real-time', path: '/customer/track' },
+          { icon: CalendarDays, title: 'Book Pickup', desc: 'Schedule a parcel pickup', path: '/customer/pickup-slots' },
         ].map((action, i) => {
           const Icon = action.icon;
           return (
             <div
               key={i}
+              onClick={() => navigate(action.path)}
               className={`group relative overflow-hidden rounded-[24px] p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] border ${action.primary
                 ? 'bg-primary/5 border-primary/30 hover:shadow-lg shadow-primary/20'
                 : 'bg-card border-border hover:border-primary/30 hover:bg-accent shadow-sm hover:shadow-md'
@@ -148,89 +159,72 @@ export default function CustomerDashboard() {
         })}
       </div>
 
-      {/* Recent Shipments */}
+      {/* Recent Activity Feed */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-xl font-bold text-foreground tracking-tight">Recent shipments</h3>
-          <button className="text-primary text-sm font-semibold hover:text-primary/80 transition-colors flex items-center gap-1">
-            View all
-          </button>
+          <h3 className="text-xl font-bold text-foreground tracking-tight">Recent Activity</h3>
         </div>
 
         <div className="space-y-4">
-          {shipments.map(shipment => {
-            const isDelivered = shipment.status === 'delivered';
-            const progress = (shipment.coveredDistance / shipment.totalDistance) * 100;
-
-            return (
-              <div 
-                key={shipment.id} 
-                className={`group backdrop-blur-sm rounded-[24px] p-6 border border-border transition-all relative overflow-hidden ${
-                  isDelivered 
-                    ? 'bg-muted/30 hover:border-primary/30 shadow-sm hover:shadow-md' 
-                    : 'bg-card hover:border-primary/30 shadow-sm hover:shadow-md'
-                }`}
-              >
-                <div className="flex flex-col md:flex-row justify-between gap-6 items-center">
-
-                  <div className="flex items-center gap-5 w-full md:w-1/4">
-                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center shrink-0 border border-border">
-                      {isDelivered ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Truck className="w-6 h-6 text-primary" />}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-lg text-foreground mb-0.5 tracking-tight">{shipment.id}</h4>
-                      <p className="text-xs font-medium text-muted-foreground">{shipment.origin} → {shipment.destination}</p>
-                    </div>
-                  </div>
-
-                  {/* Progress Line */}
-                  <div className="flex-1 px-2 md:px-8 relative">
-                    <div className="flex justify-end items-center mb-3 pr-2">
-                      {isDelivered ? (
-                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-xs font-medium rounded-full border border-emerald-500/20">Delivered</span>
-                      ) : (
-                        <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">In transit</span>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <div className="flex justify-between items-center text-xs text-muted-foreground mb-2">
-                        <span>{shipment.origin}</span>
-                        <span>{shipment.destination}</span>
-                      </div>
-                      <div className="relative h-1 bg-muted rounded-full flex items-center">
-                        <div className="absolute left-0 h-full bg-primary rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }}></div>
-                        <div className="absolute left-0 w-2 h-2 bg-primary rounded-full -ml-1"></div>
-
-                        <div 
-                          className="absolute w-5 h-5 bg-card text-primary flex items-center justify-center rounded-full -mt-0.5 z-10 shadow-lg shadow-primary/20 border border-primary/30 transition-all duration-1000 ease-linear" 
-                          style={{ left: `${progress}%`, transform: 'translateX(-50%)' }}
-                        >
-                          {isDelivered ? <CheckCircle2 className="w-3 h-3 fill-current text-emerald-500" /> : <Truck className="w-3 h-3 fill-current" />}
-                        </div>
-
-                        <div className="absolute right-0 w-2 h-2 bg-border rounded-full -mr-1"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between w-full md:w-1/4 text-right">
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {isDelivered ? 'Delivered on' : 'ETA'}
-                      </p>
-                      <p className="text-sm text-foreground">
-                        {isDelivered ? shipment.deliveredOn : shipment.eta}
-                      </p>
-                    </div>
-                    <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </div>
-
+          {isLoading ? (
+            // Skeleton Loader for Activities
+            [1, 2, 3].map(i => (
+              <div key={i} className="bg-card border border-border rounded-[24px] p-6 flex items-center gap-4 animate-pulse">
+                <div className="w-12 h-12 rounded-2xl bg-muted shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-muted rounded w-1/3"></div>
+                  <div className="h-3 bg-muted rounded w-1/4"></div>
                 </div>
+                <div className="h-4 bg-muted rounded w-16"></div>
               </div>
-            )
-          })}
+            ))
+          ) : error ? (
+            // Error State
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center border border-border border-dashed rounded-[24px] bg-card/50">
+              <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
+              <h3 className="text-lg font-bold text-foreground mb-1">Failed to load activities</h3>
+              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <button onClick={fetchDashboardData} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors">
+                <RefreshCw className="w-4 h-4" /> Try Again
+              </button>
+            </div>
+          ) : activities.length === 0 ? (
+            // Empty State
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-border border-dashed rounded-[24px] bg-card/50">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Box className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">No recent activity</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">You haven't made any shipments or payments yet. Create a new shipment to get started.</p>
+              <button onClick={() => navigate('/customer/new-shipment')} className="mt-6 flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                <PackagePlus className="w-4 h-4" /> Ship a Parcel
+              </button>
+            </div>
+          ) : (
+            // Activity Feed
+            <div className="relative border-l-2 border-muted ml-6 space-y-8 py-4">
+              {activities.map((activity, idx) => (
+                <div key={activity.id || idx} className="relative pl-8">
+                  {/* Timeline dot/icon */}
+                  <div className="absolute -left-[25px] bg-card border-2 border-muted p-1.5 rounded-full flex items-center justify-center top-0 mt-1">
+                    {getActivityIcon(activity.type)}
+                  </div>
+                  
+                  <div className="bg-card border border-border rounded-2xl p-5 hover:border-primary/30 transition-colors shadow-sm">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        <h4 className="font-bold text-foreground text-base tracking-tight mb-1">{activity.title}</h4>
+                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap bg-muted px-2.5 py-1 rounded-md">
+                        {activity.timeAgo || 'Just now'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -10,10 +10,13 @@ import {
   LayoutDashboard,
   MapPin,
   PackagePlus,
+  Package,
   CalendarDays,
   CreditCard,
   History,
   BookUser,
+  User,
+  Truck,
   Bell,
   Settings,
   HelpCircle,
@@ -27,29 +30,24 @@ const sidebarSections = [
   {
     title: 'OPERATIONS',
     links: [
+      { name: 'Ship a Parcel', path: '/customer/new-shipment', icon: PackagePlus },
+      { name: 'My Parcels', path: '/customer/my-parcels', icon: Package },
       { name: 'Track Parcel', path: '/customer/track', icon: MapPin },
-      { name: 'New Shipment', path: '/customer/new-shipment', icon: PackagePlus },
-      { name: 'Pickup Slots', path: '/customer/pickup-slots', icon: CalendarDays },
+      { name: 'Pickup Scheduling', path: '/customer/pickup-slots', icon: CalendarDays },
+      { name: 'Delivery Requests', path: '/customer/delivery-requests', icon: Truck },
     ]
   },
   {
     title: 'FINANCE',
     links: [
-      { name: 'Payment', path: '/customer/payment', icon: CreditCard },
-      { name: 'History', path: '/customer/history', icon: History },
+      { name: 'Payments', path: '/customer/payment', icon: CreditCard },
     ]
   },
   {
-    title: 'CUSTOMERS',
+    title: 'ACCOUNT',
     links: [
-      { name: 'Address Book', path: '/customer/address-book', icon: BookUser },
       { name: 'Notifications', path: '/customer/notifications', icon: Bell },
-    ]
-  },
-  {
-    title: 'SYSTEM',
-    links: [
-      { name: 'Settings', path: '/customer/settings', icon: Settings },
+      { name: 'My Profile', path: '/customer/profile', icon: User },
     ]
   }
 ]
@@ -124,13 +122,12 @@ export function CustomerLayout() {
       {/* Footer Actions */}
       <div className="p-4 mt-auto">
         <div className="bg-muted/50 border border-border rounded-2xl p-4 flex flex-col gap-3">
-          <p className="text-xs text-muted-foreground font-medium px-2">Need Admin Help?</p>
           <Link
             to="/support"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-accent transition-colors ring-1 ring-border group"
           >
             <HelpCircle className="w-4 h-4 text-primary" />
-            Contact Support
+            Help & Support
           </Link>
           <div className="h-px bg-border my-1" />
           <Link
