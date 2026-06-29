@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import { ModeToggle } from '@/components/mode-toggle'
 import { NotificationsDrawer } from '@/components/notifications-drawer'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuthStore } from '@/store/useAuthStore'
 import {
   Menu,
@@ -220,15 +221,12 @@ export function CustomerLayout() {
                 <p className="text-sm font-semibold text-foreground">{user?.fullName}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <button className="w-10 h-10 rounded-full bg-muted p-0.5 ring-2 ring-border hover:ring-primary/20 transition-all">
-                <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-bold text-foreground">{user?.initials}</span>
-                  )}
-                </div>
-              </button>
+              <Avatar className="w-10 h-10 ring-2 ring-border hover:ring-primary/20 transition-all cursor-pointer">
+                <AvatarImage src={`https://api.dicebear.com/9.x/notionists/svg?seed=${user?.full_name || user?.email || 'default'}`} alt={user?.full_name} />
+                <AvatarFallback className="bg-muted text-foreground font-bold">
+                  {user?.full_name?.split(' ').map(n => n[0]).join('')?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
             </div>
           </div>
         </header>
