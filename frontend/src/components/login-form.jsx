@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import logoMark from "@/assets/images/parcelops_logo_mark.png";
 import { LoadingTransition } from "@/shared/components/LoadingTransition/LoadingTransition";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export function LoginForm({ className, onSignupClick, ...props }) {
   const [step, setStep] = useState("login"); // 'login' | 'otp-email'
@@ -29,6 +30,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const setUser = useAuthStore((state) => state.setUser);
 
   // ----- Email/Password Login (API call) -----
   const handleLogin = async (e) => {
@@ -49,7 +51,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
         throw new Error(data.message || "Login failed");
       }
 
-      localStorage.setItem("user", JSON.stringify(data.user));
+      setUser(data.user);
       setIsNavigating(true);
       setTimeout(() => {
         navigate("/customer/dashboard");
