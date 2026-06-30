@@ -1,5 +1,6 @@
 import { CustomerLayout } from './layouts/CustomerLayout'
 import CustomerDashboard from './pages/CustomerDashboard'
+import ShipParcelPage from './pages/ShipParcelPage'
 
 export const customerRoutes = [
   {
@@ -21,7 +22,7 @@ export const customerRoutes = [
       },
       {
         path: 'new-shipment',
-        element: <div className="p-6">New Shipment Page Placeholder</div>,
+        element: <ShipParcelPage />,
       },
       {
         path: 'pickup-slots',
