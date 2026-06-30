@@ -1,6 +1,7 @@
 import { CustomerLayout } from './layouts/CustomerLayout'
 import CustomerDashboard from './pages/CustomerDashboard'
 import ShipParcelPage from './pages/ShipParcelPage'
+import MyParcelsPage from './pages/MyParcelsPage'
 
 export const customerRoutes = [
   {
@@ -33,8 +34,8 @@ export const customerRoutes = [
         element: <div className="p-6">Payment Page Placeholder</div>,
       },
       {
-        path: 'history',
-        element: <div className="p-6">History Page Placeholder</div>,
+        path: 'my-parcels',
+        element: <MyParcelsPage />,
       },
     ],
   },
