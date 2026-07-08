@@ -160,7 +160,7 @@ export function CustomerLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-background flex font-sans selection:bg-primary/30 text-foreground overflow-x-hidden">
+    <div className="h-screen bg-background flex font-sans selection:bg-primary/30 text-foreground overflow-hidden">
       {/* Mobile Menu Backdrop */}
       {isMenuOpen && (
         <div
@@ -180,12 +180,12 @@ export function CustomerLayout() {
       </nav>
 
       {/* Desktop Sidebar */}
-      <nav className="hidden lg:flex flex-col w-[280px] bg-card border-r border-border z-40 shrink-0 h-screen sticky top-0">
+      <nav className="hidden lg:flex flex-col w-[280px] bg-card border-r border-border z-40 shrink-0 h-full">
         <SidebarContent />
       </nav>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div data-main-scroll className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
         {/* Top Bar */}
         <header className="h-20 px-6 sm:px-10 flex items-center justify-between shrink-0 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-30">
           <div className="flex items-center gap-4">
@@ -218,7 +218,7 @@ export function CustomerLayout() {
             </NotificationsDrawer>
             <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-border">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-foreground">{user?.fullName}</p>
+                <p className="text-sm font-semibold text-foreground">{user?.full_name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <Avatar className="w-10 h-10 ring-2 ring-border hover:ring-primary/20 transition-all cursor-pointer">

@@ -2,6 +2,7 @@ import { CustomerLayout } from './layouts/CustomerLayout'
 import CustomerDashboard from './pages/CustomerDashboard'
 import ShipParcelPage from './pages/ShipParcelPage'
 import MyParcelsPage from './pages/MyParcelsPage'
+import PickupSchedulingPage from './pages/PickupSchedulingPage'
 
 export const customerRoutes = [
   {
@@ -27,7 +28,7 @@ export const customerRoutes = [
       },
       {
         path: 'pickup-slots',
-        element: <div className="p-6">Pickup Slots Page Placeholder</div>,
+        element: <PickupSchedulingPage />,
       },
       {
         path: 'payment',
