@@ -35,7 +35,6 @@ export default function ProfilePage() {
     security, 
     notifications, 
     toggleNotification,
-    toggleNotification,
     toggleMFA,
     updatePersonalInfo,
     addAddress,
@@ -127,25 +126,28 @@ export default function ProfilePage() {
     toast.success('Password changed successfully')
   }
 
-  // iOS-style toggle component
+  // Premium modern toggle component
   const Toggle = ({ enabled, onToggle }) => (
     <button 
       onClick={onToggle}
       className={cn(
-        "relative w-[51px] h-[31px] rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shrink-0",
+        "relative w-[52px] h-[32px] rounded-full transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] shrink-0",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         enabled 
-          ? "bg-primary shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.04)]" 
-          : "bg-muted-foreground/25 dark:bg-muted-foreground/35 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.06)]"
+          ? "bg-gradient-to-r from-primary to-primary/85 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_0_12px_-2px] shadow-primary/40" 
+          : "bg-muted-foreground/20 dark:bg-muted-foreground/30 shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
       )}
       role="switch"
       aria-checked={enabled}
     >
       <div className={cn(
-        "absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-        "shadow-[0_3px_8px_rgba(0,0,0,0.15),0_1px_1px_rgba(0,0,0,0.06)]",
-        enabled ? "translate-x-[22px]" : "translate-x-[2px]"
-      )} />
+        "absolute top-[3px] w-[26px] h-[26px] rounded-full bg-white transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+        "shadow-[0_1px_3px_rgba(0,0,0,0.1),0_4px_8px_rgba(0,0,0,0.08)]",
+        enabled ? "translate-x-[23px]" : "translate-x-[3px]"
+      )}>
+        {/* Inner shine */}
+        <div className="absolute inset-0.5 rounded-full bg-gradient-to-b from-white to-gray-50" />
+      </div>
     </button>
   )
 
