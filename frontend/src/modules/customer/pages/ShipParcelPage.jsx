@@ -3,14 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/store/useAuthStore'
+import { useProfileStore } from '../store/useProfileStore'
 
 export default function ShipParcelPage() {
   const navigate = useNavigate()
   
+  const { user } = useAuthStore()
+  const { personalInfo, savedAddresses } = useProfileStore()
+  
+  const defaultAddress = savedAddresses?.find(a => a.isDefault)?.address || savedAddresses?.[0]?.address || ''
+
   // Form State
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [formData, setFormData] = useState({
-    sender: { fullName: '', phone: '', email: '', address: '' },
+    sender: { 
+      fullName: user?.full_name || personalInfo?.name || '', 
+      phone: personalInfo?.phone || '', 
+      email: user?.email || personalInfo?.email || '', 
+      address: defaultAddress
+    },
     receiver: { fullName: '', phone: '', email: '', address: '' },
     parcel: { type: 'document', description: '', weight: '', estimatedValue: '', instructions: '' },
     options: { pickupBranch: '', deliveryMethod: 'home', deliverySpeed: 'standard' }
@@ -82,7 +94,12 @@ export default function ShipParcelPage() {
   const resetForm = () => {
     setIsSubmitted(false)
     setFormData({
-      sender: { fullName: '', phone: '', email: '', address: '' },
+      sender: { 
+        fullName: user?.full_name || personalInfo?.name || '', 
+        phone: personalInfo?.phone || '', 
+        email: user?.email || personalInfo?.email || '', 
+        address: defaultAddress
+      },
       receiver: { fullName: '', phone: '', email: '', address: '' },
       parcel: { type: 'document', description: '', weight: '', estimatedValue: '', instructions: '' },
       options: { pickupBranch: '', deliveryMethod: 'home', deliverySpeed: 'standard' }
@@ -151,7 +168,27 @@ export default function ShipParcelPage() {
                 <InputField label="Phone Number" type="tel" required value={formData.sender.phone} onChange={e => handleInputChange('sender', 'phone', e.target.value)} placeholder="Enter phone number" />
                 <InputField label="Email" type="email" required value={formData.sender.email} onChange={e => handleInputChange('sender', 'email', e.target.value)} placeholder="Enter email address" className="sm:col-span-2" />
                 <div className="sm:col-span-2 space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
+                    {savedAddresses && savedAddresses.length > 0 && (
+                      <select 
+                        className="text-xs text-primary bg-primary/10 border-none outline-none cursor-pointer rounded px-2 py-1 appearance-none hover:bg-primary/20 transition-colors"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleInputChange('sender', 'address', e.target.value)
+                            // Reset select value after choosing
+                            e.target.value = ""
+                          }
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Use saved address...</option>
+                        {savedAddresses.map(addr => (
+                          <option key={addr.id} value={addr.address}>{addr.label}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                   <textarea 
                     required
                     value={formData.sender.address}

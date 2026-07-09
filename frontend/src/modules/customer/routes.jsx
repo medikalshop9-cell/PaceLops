@@ -4,6 +4,9 @@ import ShipParcelPage from './pages/ShipParcelPage'
 import MyParcelsPage from './pages/MyParcelsPage'
 import PickupSchedulingPage from './pages/PickupSchedulingPage'
 
+import DeliveryRequestsPage from './pages/DeliveryRequestsPage'
+import ProfilePage from './pages/ProfilePage'
+
 export const customerRoutes = [
   {
     path: '/customer',
@@ -16,6 +19,14 @@ export const customerRoutes = [
       {
         path: 'dashboard',
         element: <CustomerDashboard />,
+      },
+      {
+        path: 'delivery-requests',
+        element: <DeliveryRequestsPage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
       },
       // Placeholders for other routes mentioned in the navigation
       {

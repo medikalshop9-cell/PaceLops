@@ -98,14 +98,14 @@ export function CustomerLayout() {
               {section.links.map((link) => {
                 const Icon = link.icon
                 const isActive = currentPath.startsWith(link.path)
-                
+
                 const linkClasses = cn(
                   "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 font-medium text-[14px]",
                   isActive
                     ? "bg-muted text-primary shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )
-                
+
                 const iconClasses = cn("w-4 h-4", isActive ? "text-[#FF7A00]" : "text-slate-500")
 
                 if (link.name === 'Notifications') {
@@ -221,12 +221,14 @@ export function CustomerLayout() {
                 <p className="text-sm font-semibold text-foreground">{user?.full_name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <Avatar className="w-10 h-10 ring-2 ring-border hover:ring-primary/20 transition-all cursor-pointer">
-                <AvatarImage src={`https://api.dicebear.com/9.x/notionists/svg?seed=${user?.full_name || user?.email || 'default'}`} alt={user?.full_name} />
-                <AvatarFallback className="bg-muted text-foreground font-bold">
-                  {user?.full_name?.split(' ').map(n => n[0]).join('')?.toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
+              <Link to="/customer/profile">
+                <Avatar className="w-10 h-10 ring-2 ring-border hover:ring-primary/20 transition-all cursor-pointer">
+                  <AvatarImage src={`https://api.dicebear.com/9.x/notionists/svg?seed=${user?.full_name || user?.email || 'default'}`} alt={user?.full_name} />
+                  <AvatarFallback className="bg-muted text-foreground font-bold">
+                    {user?.full_name?.split(' ').map(n => n[0]).join('')?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
             </div>
           </div>
         </header>
