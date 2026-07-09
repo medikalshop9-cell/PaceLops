@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import { ModeToggle } from '@/components/mode-toggle'
 import { NotificationsDrawer } from '@/components/notifications-drawer'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuthStore } from '@/store/useAuthStore'
 import {
   Menu,
@@ -97,19 +98,35 @@ export function CustomerLayout() {
               {section.links.map((link) => {
                 const Icon = link.icon
                 const isActive = currentPath.startsWith(link.path)
+                
+                const linkClasses = cn(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 font-medium text-[14px]",
+                  isActive
+                    ? "bg-muted text-primary shadow-sm ring-1 ring-border"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )
+                
+                const iconClasses = cn("w-4 h-4", isActive ? "text-[#FF7A00]" : "text-slate-500")
+
+                if (link.name === 'Notifications') {
+                  return (
+                    <NotificationsDrawer key={link.name}>
+                      <button className={cn(linkClasses, "w-full")}>
+                        <Icon className={iconClasses} />
+                        {link.name}
+                      </button>
+                    </NotificationsDrawer>
+                  )
+                }
+
                 return (
                   <Link
                     key={link.name}
                     to={link.path}
                     onClick={() => setIsMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 font-medium text-[14px]",
-                      isActive
-                        ? "bg-muted text-primary shadow-sm ring-1 ring-border"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                    )}
+                    className={linkClasses}
                   >
-                    <Icon className={cn("w-4 h-4", isActive ? "text-[#FF7A00]" : "text-slate-500")} />
+                    <Icon className={iconClasses} />
                     {link.name}
                   </Link>
                 )
@@ -204,15 +221,12 @@ export function CustomerLayout() {
                 <p className="text-sm font-semibold text-foreground">{user?.fullName}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <button className="w-10 h-10 rounded-full bg-muted p-0.5 ring-2 ring-border hover:ring-primary/20 transition-all">
-                <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user.fullName} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-bold text-foreground">{user?.initials}</span>
-                  )}
-                </div>
-              </button>
+              <Avatar className="w-10 h-10 ring-2 ring-border hover:ring-primary/20 transition-all cursor-pointer">
+                <AvatarImage src={`https://api.dicebear.com/9.x/notionists/svg?seed=${user?.full_name || user?.email || 'default'}`} alt={user?.full_name} />
+                <AvatarFallback className="bg-muted text-foreground font-bold">
+                  {user?.full_name?.split(' ').map(n => n[0]).join('')?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
             </div>
           </div>
         </header>

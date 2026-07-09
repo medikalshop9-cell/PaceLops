@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Sheet,
   SheetContent,
@@ -6,92 +7,56 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { Package, Truck, MapPin, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react'
-
-// Mock logistics events
-const NOTIFICATIONS = [
-  {
-    id: 1,
-    type: 'parcel_created',
-    title: 'Parcel Created',
-    description: 'Shipment PCL-4821 created successfully',
-    time: '2 mins ago',
-    unread: true,
-  },
-  {
-    id: 2,
-    type: 'driver_assigned',
-    title: 'Driver Assigned',
-    description: 'A driver has been assigned',
-    time: '10 mins ago',
-    unread: true,
-  },
-  {
-    id: 3,
-    type: 'driver_near',
-    title: 'Driver Near Pickup',
-    description: 'Driver arriving within 5 minutes',
-    time: '1 hr ago',
-    unread: true,
-  },
-  {
-    id: 4,
-    type: 'in_transit',
-    title: 'Parcel In Transit',
-    description: 'Your shipment is on route to Abuja',
-    time: '3 hrs ago',
-    unread: false,
-  },
-  {
-    id: 5,
-    type: 'delivered',
-    title: 'Delivered',
-    description: 'Shipment delivered successfully',
-    time: 'Yesterday',
-    unread: false,
-  },
-  {
-    id: 6,
-    type: 'failed',
-    title: 'Delivery Attempt Failed',
-    description: 'Recipient unavailable',
-    time: 'May 23',
-    unread: false,
-  },
-]
+import { Package, Truck, MapPin, CheckCircle2, AlertTriangle, ArrowLeft, Bell, PackagePlus, CreditCard, Activity } from 'lucide-react'
+import { dashboardService } from '@/modules/customer/services/dashboard.service'
 
 const getEventConfig = (type) => {
   switch (type) {
-    case 'parcel_created':
-      return { icon: Package, colorClass: 'text-primary bg-primary/10' }
-    case 'driver_assigned':
-      return { icon: Truck, colorClass: 'text-muted-foreground bg-muted' }
-    case 'driver_near':
-      return { icon: MapPin, colorClass: 'text-blue-500 bg-blue-500/10' }
-    case 'in_transit':
-      return { icon: Truck, colorClass: 'text-primary bg-primary/10' }
-    case 'delivered':
-      return { icon: CheckCircle2, colorClass: 'text-emerald-500 bg-emerald-500/10' }
-    case 'failed':
-      return { icon: AlertTriangle, colorClass: 'text-red-500 bg-red-500/10' }
+    case 'parcel_update':
+      return { icon: Truck, colorClass: 'text-blue-500 bg-blue-500/10' }
+    case 'payment':
+      return { icon: CreditCard, colorClass: 'text-emerald-500 bg-emerald-500/10' }
+    case 'delivery_request':
+      return { icon: PackagePlus, colorClass: 'text-primary bg-primary/10' }
     default:
-      return { icon: Package, colorClass: 'text-muted-foreground bg-muted' }
+      return { icon: Activity, colorClass: 'text-muted-foreground bg-muted' }
   }
 }
 
 export function NotificationsDrawer({ children }) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  
+  const user = JSON.parse(localStorage.getItem('user'))
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (open && user?.id) {
+      const fetchNotifications = async () => {
+        setIsLoading(true)
+        setError(null)
+        try {
+          // Reusing the recent activities as notifications for the authenticated user
+          const activities = await dashboardService.getRecentActivities(user.id)
+          setNotifications(activities)
+        } catch (err) {
+          setError(err.message || 'Failed to load notifications')
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      
+      fetchNotifications()
+    }
+  }, [open, user?.id])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
-      {/* 
-        Width adjustments:
-        - Mobile: w-full (100% width)
-        - Desktop: sm:max-w-[400px]
-      */}
       <SheetContent className="w-full sm:max-w-[400px] p-0 flex flex-col bg-card border-l border-border z-[100]">
         
         {/* Mobile Header (Shows only on small screens) */}
@@ -118,45 +83,65 @@ export function NotificationsDrawer({ children }) {
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col">
-            {NOTIFICATIONS.map((notification) => {
-              const { icon: Icon, colorClass } = getEventConfig(notification.type)
-              return (
-                <div 
-                  key={notification.id} 
-                  className="relative flex items-start gap-4 p-4 sm:p-6 hover:bg-muted/50 transition-colors border-b border-border/50 group cursor-pointer"
-                >
-                  {/* Icon */}
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold text-sm text-foreground truncate mr-2">
-                        {notification.title}
-                      </p>
-                      {notification.unread && (
-                        <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 pr-4 leading-relaxed">
-                      {notification.description}
-                    </p>
-                    <p className="text-[11px] font-medium text-muted-foreground/80 mt-2">
-                      {notification.time}
-                    </p>
+            {isLoading ? (
+              // Skeleton state
+              [1, 2, 3].map(i => (
+                <div key={i} className="flex items-start gap-4 p-4 sm:p-6 border-b border-border/50 animate-pulse">
+                  <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-full" />
+                    <div className="h-2 bg-muted rounded w-1/4 mt-2" />
                   </div>
                 </div>
-              )
-            })}
-          </div>
-
-          {/* Footer Action */}
-          <div className="p-4 sm:p-6 border-t border-border mt-auto">
-            <button className="w-full py-2.5 bg-muted hover:bg-accent text-sm font-semibold text-foreground rounded-xl transition-colors ring-1 ring-border">
-              View All Notifications &rarr;
-            </button>
+              ))
+            ) : error ? (
+              // Error state
+              <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                <AlertTriangle className="w-8 h-8 text-red-500/80 mb-3" />
+                <p className="text-sm">{error}</p>
+              </div>
+            ) : notifications.length === 0 ? (
+              // Empty state
+              <div className="flex flex-col items-center justify-center p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Bell className="w-8 h-8 text-muted-foreground/50" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">All caught up!</h3>
+                <p className="text-sm text-muted-foreground">You have no new notifications.</p>
+              </div>
+            ) : (
+              // Populated list
+              notifications.map((notification) => {
+                const { icon: Icon, colorClass } = getEventConfig(notification.type)
+                return (
+                  <div 
+                    key={notification.id} 
+                    className="relative flex items-start gap-4 p-4 sm:p-6 hover:bg-muted/50 transition-colors border-b border-border/50 group cursor-pointer"
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-semibold text-sm text-foreground truncate mr-2">
+                          {notification.title}
+                        </p>
+                        {notification.unread && (
+                          <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2 pr-4 leading-relaxed">
+                        {notification.description}
+                      </p>
+                      <p className="text-[11px] font-medium text-muted-foreground/80 mt-2">
+                        {notification.timeAgo || 'Just now'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
       </SheetContent>
