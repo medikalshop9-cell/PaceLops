@@ -2,6 +2,10 @@ import { CustomerLayout } from './layouts/CustomerLayout'
 import CustomerDashboard from './pages/CustomerDashboard'
 import ShipParcelPage from './pages/ShipParcelPage'
 import MyParcelsPage from './pages/MyParcelsPage'
+import PickupSchedulingPage from './pages/PickupSchedulingPage'
+
+import DeliveryRequestsPage from './pages/DeliveryRequestsPage'
+import ProfilePage from './pages/ProfilePage'
 
 export const customerRoutes = [
   {
@@ -16,6 +20,14 @@ export const customerRoutes = [
         path: 'dashboard',
         element: <CustomerDashboard />,
       },
+      {
+        path: 'delivery-requests',
+        element: <DeliveryRequestsPage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
+      },
       // Placeholders for other routes mentioned in the navigation
       {
         path: 'track',
@@ -27,7 +39,7 @@ export const customerRoutes = [
       },
       {
         path: 'pickup-slots',
-        element: <div className="p-6">Pickup Slots Page Placeholder</div>,
+        element: <PickupSchedulingPage />,
       },
       {
         path: 'payment',

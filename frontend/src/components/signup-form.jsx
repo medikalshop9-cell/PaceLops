@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import logoMark from "@/assets/images/parcelops_logo_mark.png";
+import { useAuthStore } from "@/store/useAuthStore";
 import { LoadingTransition } from "@/shared/components/LoadingTransition/LoadingTransition";
 
 export function SignupForm({
@@ -25,6 +27,7 @@ export function SignupForm({
   ...props
 }) {
   const navigate = useNavigate();
+  const setUser = useAuthStore((state) => state.setUser);
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -69,7 +72,10 @@ export function SignupForm({
       const data = await response.json();
 
       if (response.ok) {
-        alert("Account created successfully!");
+        // Save user data to auth store so the name displays everywhere
+        if (data.user) {
+          setUser(data.user);
+        }
 
         setFormData({
           full_name: "",
