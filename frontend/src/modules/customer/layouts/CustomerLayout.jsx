@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, Outlet } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -55,8 +55,17 @@ const sidebarSections = [
 
 export function CustomerLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [topSearch, setTopSearch] = useState('')
   const location = useLocation()
   const { user } = useAuthStore()
+  const navigate = useNavigate()
+
+  function handleTopSearch(e) {
+    if (e.key === 'Enter' && topSearch.trim()) {
+      navigate(`/customer/track?q=${encodeURIComponent(topSearch.trim())}`)
+      setTopSearch('')
+    }
+  }
 
   const currentPath = location.pathname === '/customer' ? '/customer/dashboard' : location.pathname
 
@@ -140,7 +149,7 @@ export function CustomerLayout() {
       <div className="p-4 mt-auto">
         <div className="bg-muted/50 border border-border rounded-2xl p-4 flex flex-col gap-3">
           <Link
-            to="/support"
+            to="/customer/support"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-accent transition-colors ring-1 ring-border group"
           >
             <HelpCircle className="w-4 h-4 text-primary" />
@@ -199,11 +208,14 @@ export function CustomerLayout() {
               <Search className="w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
+                value={topSearch}
+                onChange={e => setTopSearch(e.target.value)}
+                onKeyDown={handleTopSearch}
                 placeholder="Search shipments..."
                 className="bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground w-full"
               />
               <div className="flex items-center justify-center px-1.5 py-0.5 rounded bg-background text-[10px] font-medium text-muted-foreground border border-border">
-                ⌘K
+                ⏎
               </div>
             </div>
           </div>
