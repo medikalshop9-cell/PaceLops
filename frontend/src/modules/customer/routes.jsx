@@ -7,6 +7,7 @@ import TrackParcelPage from './pages/TrackParcelPage'
 import DeliveryRequestsPage from './pages/DeliveryRequestsPage'
 import ProfilePage from './pages/ProfilePage'
 import HelpSupportPage from './pages/HelpSupportPage'
+import PaymentsPage from './pages/PaymentsPage'
 
 export const customerRoutes = [
   {
@@ -47,7 +48,7 @@ export const customerRoutes = [
       },
       {
         path: 'payment',
-        element: <div className="p-6">Payment Page Placeholder</div>,
+        element: <PaymentsPage />,
       },
       {
         path: 'my-parcels',
