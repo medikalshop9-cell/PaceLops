@@ -6,6 +6,34 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useProfileStore } from '../store/useProfileStore'
 
+// Helper component for Section Headers
+const SectionHeader = ({ icon: Icon, title, number }) => (
+  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground font-semibold">
+      {number ? number : <Icon className="w-5 h-5" />}
+    </div>
+    <h2 className="text-lg font-bold text-foreground">{title}</h2>
+  </div>
+)
+
+// Helper component for Inputs
+const InputField = ({ label, type = 'text', required = false, value, onChange, placeholder, className = '', disabled = false }) => (
+  <div className={`space-y-1.5 ${className}`}>
+    <label className="text-sm font-semibold text-foreground">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input 
+      type={type} 
+      required={required}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className="w-full px-4 py-2.5 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm disabled:opacity-50"
+      disabled={disabled}
+    />
+  </div>
+)
+
 export default function ShipParcelPage() {
   const navigate = useNavigate()
   
@@ -107,34 +135,6 @@ export default function ShipParcelPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Helper component for Section Headers
-  const SectionHeader = ({ icon: Icon, title, number }) => (
-    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground font-semibold">
-        {number ? number : <Icon className="w-5 h-5" />}
-      </div>
-      <h2 className="text-lg font-bold text-foreground">{title}</h2>
-    </div>
-  )
-
-  // Helper component for Inputs
-  const InputField = ({ label, type = 'text', required = false, value, onChange, placeholder, className = '' }) => (
-    <div className={`space-y-1.5 ${className}`}>
-      <label className="text-sm font-semibold text-foreground">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input 
-        type={type} 
-        required={required}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full px-4 py-2.5 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm disabled:opacity-50"
-        disabled={isSubmitted}
-      />
-    </div>
-  )
-
   return (
     <div className="py-8 pb-24 max-w-7xl mx-auto space-y-6">
       
@@ -164,9 +164,9 @@ export default function ShipParcelPage() {
             <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
               <SectionHeader icon={User} title="Sender Details" number="1" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <InputField label="Full Name" required value={formData.sender.fullName} onChange={e => handleInputChange('sender', 'fullName', e.target.value)} placeholder="Enter full name" />
-                <InputField label="Phone Number" type="tel" required value={formData.sender.phone} onChange={e => handleInputChange('sender', 'phone', e.target.value)} placeholder="Enter phone number" />
-                <InputField label="Email" type="email" required value={formData.sender.email} onChange={e => handleInputChange('sender', 'email', e.target.value)} placeholder="Enter email address" className="sm:col-span-2" />
+                <InputField disabled={isSubmitted} label="Full Name" required value={formData.sender.fullName} onChange={e => handleInputChange('sender', 'fullName', e.target.value)} placeholder="Enter full name" />
+                <InputField disabled={isSubmitted} label="Phone Number" type="tel" required value={formData.sender.phone} onChange={e => handleInputChange('sender', 'phone', e.target.value)} placeholder="Enter phone number" />
+                <InputField disabled={isSubmitted} label="Email" type="email" required value={formData.sender.email} onChange={e => handleInputChange('sender', 'email', e.target.value)} placeholder="Enter email address" className="sm:col-span-2" />
                 <div className="sm:col-span-2 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
@@ -205,9 +205,9 @@ export default function ShipParcelPage() {
             <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
               <SectionHeader icon={UserCheck} title="Receiver Details" number="2" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <InputField label="Full Name" required value={formData.receiver.fullName} onChange={e => handleInputChange('receiver', 'fullName', e.target.value)} placeholder="Enter full name" />
-                <InputField label="Phone Number" type="tel" required value={formData.receiver.phone} onChange={e => handleInputChange('receiver', 'phone', e.target.value)} placeholder="Enter phone number" />
-                <InputField label="Email" type="email" required value={formData.receiver.email} onChange={e => handleInputChange('receiver', 'email', e.target.value)} placeholder="Enter email address" className="sm:col-span-2" />
+                <InputField disabled={isSubmitted} label="Full Name" required value={formData.receiver.fullName} onChange={e => handleInputChange('receiver', 'fullName', e.target.value)} placeholder="Enter full name" />
+                <InputField disabled={isSubmitted} label="Phone Number" type="tel" required value={formData.receiver.phone} onChange={e => handleInputChange('receiver', 'phone', e.target.value)} placeholder="Enter phone number" />
+                <InputField disabled={isSubmitted} label="Email" type="email" required value={formData.receiver.email} onChange={e => handleInputChange('receiver', 'email', e.target.value)} placeholder="Enter email address" className="sm:col-span-2" />
                 <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
                   <textarea 
@@ -240,7 +240,7 @@ export default function ShipParcelPage() {
                     <option value="electronics">Electronics</option>
                   </select>
                 </div>
-                <InputField label="Description" required value={formData.parcel.description} onChange={e => handleInputChange('parcel', 'description', e.target.value)} placeholder="Enter description of contents" />
+                <InputField disabled={isSubmitted} label="Description" required value={formData.parcel.description} onChange={e => handleInputChange('parcel', 'description', e.target.value)} placeholder="Enter description of contents" />
                 
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-foreground">Weight <span className="text-muted-foreground font-normal">(optional)</span></label>
@@ -260,7 +260,7 @@ export default function ShipParcelPage() {
                   </div>
                 </div>
 
-                <InputField label="Estimated Value" type="number" required value={formData.parcel.estimatedValue} onChange={e => handleInputChange('parcel', 'estimatedValue', e.target.value)} placeholder="Enter estimated value" />
+                <InputField disabled={isSubmitted} label="Estimated Value" type="number" required value={formData.parcel.estimatedValue} onChange={e => handleInputChange('parcel', 'estimatedValue', e.target.value)} placeholder="Enter estimated value" />
                 
                 <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-sm font-semibold text-foreground">Special Instructions <span className="text-muted-foreground font-normal">(optional)</span></label>

@@ -24,6 +24,8 @@ import {
   LogOut,
   X,
   Search,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 // Defined sidebar sections based on user requirements
@@ -53,8 +55,133 @@ const sidebarSections = [
   }
 ]
 
+const SidebarContent = ({ currentPath, setIsMenuOpen, isCollapsed, setIsCollapsed }) => {
+  return (
+    <div className="flex flex-col h-full bg-card text-muted-foreground overflow-hidden">
+      {/* Brand */}
+      <div className={cn("flex items-center h-20 shrink-0 border-b border-border/10", isCollapsed ? "justify-center px-0" : "px-8 justify-between")}>
+        <span className={cn("font-bold tracking-tight text-foreground flex items-center gap-2", isCollapsed ? "" : "text-xl")}>
+          <img src={logoMark} alt="ParcelOps Logo" className="w-8 h-8 object-contain shrink-0" />
+          {!isCollapsed && <span>PARCELOPS</span>}
+        </span>
+        <button 
+           onClick={() => setIsCollapsed(!isCollapsed)}
+           className={cn("hidden lg:flex p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors", isCollapsed && "absolute top-24 -right-3 z-50 bg-card border border-border rounded-full shadow-sm hover:scale-110")}
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-4 space-y-6 no-scrollbar overflow-x-hidden">
+        {/* Main Dashboard Link */}
+        <div className="px-2">
+          <Link
+            to="/customer/dashboard"
+            onClick={() => setIsMenuOpen(false)}
+            className={cn(
+              "flex items-center rounded-xl transition-all duration-300 font-medium",
+              isCollapsed ? "justify-center p-3 mx-2" : "gap-3 px-4 py-3 mx-2",
+              currentPath.startsWith('/customer/dashboard')
+                ? "bg-muted text-primary shadow-sm ring-1 ring-border"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            )}
+            title={isCollapsed ? "Dashboard" : undefined}
+          >
+            <LayoutDashboard className={cn(isCollapsed ? "w-6 h-6" : "w-5 h-5 shrink-0", currentPath.startsWith('/customer/dashboard') ? "text-[#FF7A00]" : "text-slate-500")} />
+            {!isCollapsed && <span className="truncate">Dashboard</span>}
+          </Link>
+        </div>
+
+        {/* Sections */}
+        {sidebarSections.map((section) => (
+          <div key={section.title} className="px-2">
+            {!isCollapsed ? (
+              <h3 className="px-6 text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3 truncate">
+                {section.title}
+              </h3>
+            ) : (
+              <div className="h-px bg-border my-4 mx-4" />
+            )}
+            
+            <div className="space-y-1 px-2">
+              {section.links.map((link) => {
+                const Icon = link.icon
+                const isActive = currentPath.startsWith(link.path)
+
+                const linkClasses = cn(
+                  "flex items-center rounded-xl transition-all duration-300 font-medium text-[14px]",
+                  isCollapsed ? "justify-center p-3" : "gap-3 px-4 py-2.5",
+                  isActive
+                    ? "bg-muted text-primary shadow-sm ring-1 ring-border"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )
+
+                const iconClasses = cn(isCollapsed ? "w-5 h-5 shrink-0" : "w-4 h-4 shrink-0", isActive ? "text-[#FF7A00]" : "text-slate-500")
+
+                if (link.name === 'Notifications') {
+                  return (
+                    <NotificationsDrawer key={link.name}>
+                      <button className={cn(linkClasses, "w-full")} title={isCollapsed ? link.name : undefined}>
+                        <Icon className={iconClasses} />
+                        {!isCollapsed && <span className="truncate">{link.name}</span>}
+                      </button>
+                    </NotificationsDrawer>
+                  )
+                }
+
+                return (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={linkClasses}
+                    title={isCollapsed ? link.name : undefined}
+                  >
+                    <Icon className={iconClasses} />
+                    {!isCollapsed && <span className="truncate">{link.name}</span>}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="p-4 mt-auto border-t border-border/10">
+        <div className={cn("bg-muted/50 border border-border rounded-2xl flex flex-col gap-2", isCollapsed ? "p-2 items-center" : "p-3")}>
+          <Link
+            to="/customer/support"
+            className={cn(
+              "flex items-center rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-accent transition-colors ring-1 ring-border group",
+              isCollapsed ? "p-2.5 justify-center w-full" : "gap-3 px-3 py-2.5"
+            )}
+            title={isCollapsed ? "Help & Support" : undefined}
+          >
+            <HelpCircle className={cn("text-primary shrink-0", isCollapsed ? "w-5 h-5" : "w-4 h-4")} />
+            {!isCollapsed && <span className="truncate">Help & Support</span>}
+          </Link>
+          <div className={cn("h-px bg-border", isCollapsed ? "w-6 my-1" : "w-full my-1")} />
+          <Link
+            to="/login"
+            className={cn(
+              "flex items-center rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+              isCollapsed ? "p-2.5 justify-center w-full" : "gap-3 px-3 py-2.5"
+            )}
+            title={isCollapsed ? "Logout" : undefined}
+          >
+            <LogOut className={cn("text-muted-foreground shrink-0", isCollapsed ? "w-5 h-5" : "w-4 h-4")} />
+            {!isCollapsed && <span className="truncate">Logout</span>}
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function CustomerLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const [topSearch, setTopSearch] = useState('')
   const location = useLocation()
   const { user } = useAuthStore()
@@ -68,105 +195,6 @@ export function CustomerLayout() {
   }
 
   const currentPath = location.pathname === '/customer' ? '/customer/dashboard' : location.pathname
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-card text-muted-foreground">
-      {/* Brand */}
-      <div className="flex items-center h-20 px-8">
-        <span className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <img src={logoMark} alt="ParcelOps Logo" className="w-8 h-8 object-contain" />
-          PARCELOPS
-        </span>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-8 no-scrollbar">
-        {/* Main Dashboard Link */}
-        <div className="px-2">
-          <Link
-            to="/customer/dashboard"
-            onClick={() => setIsMenuOpen(false)}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium",
-              currentPath.startsWith('/customer/dashboard')
-                ? "bg-muted text-primary shadow-sm ring-1 ring-border"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent"
-            )}
-          >
-            <LayoutDashboard className={cn("w-5 h-5", currentPath.startsWith('/customer/dashboard') ? "text-[#FF7A00]" : "text-slate-500")} />
-            Dashboard
-          </Link>
-        </div>
-
-        {/* Sections */}
-        {sidebarSections.map((section) => (
-          <div key={section.title} className="px-2">
-            <h3 className="px-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-              {section.title}
-            </h3>
-            <div className="space-y-1">
-              {section.links.map((link) => {
-                const Icon = link.icon
-                const isActive = currentPath.startsWith(link.path)
-
-                const linkClasses = cn(
-                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 font-medium text-[14px]",
-                  isActive
-                    ? "bg-muted text-primary shadow-sm ring-1 ring-border"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                )
-
-                const iconClasses = cn("w-4 h-4", isActive ? "text-[#FF7A00]" : "text-slate-500")
-
-                if (link.name === 'Notifications') {
-                  return (
-                    <NotificationsDrawer key={link.name}>
-                      <button className={cn(linkClasses, "w-full")}>
-                        <Icon className={iconClasses} />
-                        {link.name}
-                      </button>
-                    </NotificationsDrawer>
-                  )
-                }
-
-                return (
-                  <Link
-                    key={link.name}
-                    to={link.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={linkClasses}
-                  >
-                    <Icon className={iconClasses} />
-                    {link.name}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer Actions */}
-      <div className="p-4 mt-auto">
-        <div className="bg-muted/50 border border-border rounded-2xl p-4 flex flex-col gap-3">
-          <Link
-            to="/customer/support"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-accent transition-colors ring-1 ring-border group"
-          >
-            <HelpCircle className="w-4 h-4 text-primary" />
-            Help & Support
-          </Link>
-          <div className="h-px bg-border my-1" />
-          <Link
-            to="/login"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          >
-            <LogOut className="w-4 h-4 text-muted-foreground" />
-            Logout
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <div className="h-screen bg-background flex font-sans selection:bg-primary/30 text-foreground overflow-hidden">
@@ -185,12 +213,15 @@ export function CustomerLayout() {
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent />
+        <SidebarContent currentPath={currentPath} setIsMenuOpen={setIsMenuOpen} isCollapsed={false} setIsCollapsed={() => {}} />
       </nav>
 
       {/* Desktop Sidebar */}
-      <nav className="hidden lg:flex flex-col w-[280px] bg-card border-r border-border z-40 shrink-0 h-full">
-        <SidebarContent />
+      <nav className={cn(
+        "hidden lg:flex flex-col bg-card border-r border-border z-40 shrink-0 h-full transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative",
+        isCollapsed ? "w-[96px]" : "w-[280px]"
+      )}>
+        <SidebarContent currentPath={currentPath} setIsMenuOpen={setIsMenuOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       </nav>
 
       {/* Main Content Area */}
