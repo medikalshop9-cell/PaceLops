@@ -1,12 +1,35 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info, MapPin } from 'lucide-react'
+import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info, MapPin, Navigation } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useProfileStore } from '../store/useProfileStore'
 import { Map, MapMarker, MarkerContent, MapControls } from '@/components/ui/map'
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
+
+const satelliteMapStyle = {
+  version: 8,
+  sources: {
+    'raster-tiles': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      attribution: 'Esri, Maxar, Earthstar Geographics'
+    }
+  },
+  layers: [
+    {
+      id: 'simple-tiles',
+      type: 'raster',
+      source: 'raster-tiles',
+      minzoom: 0,
+      maxzoom: 22
+    }
+  ]
+}
 
 // Helper component for Section Headers
 const SectionHeader = ({ icon: Icon, title, number }) => (
@@ -87,6 +110,36 @@ export default function ShipParcelPage() {
     } catch (err) {
       toast.error('Could not fetch address.', { id: 'geocode' })
     }
+  }
+
+  const handleUseCurrentLocation = (type) => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser')
+      return
+    }
+    
+    toast.loading('Getting your location...', { id: 'gps' })
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const coords = [position.coords.longitude, position.coords.latitude]
+      handleInputChange(type, 'coords', coords)
+      // also update temp coords just in case they open the map later
+      handleMapState(type, 'tempCoords', coords)
+      
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords[1]}&lon=${coords[0]}`)
+        const data = await res.json()
+        if (data && data.display_name) {
+          handleInputChange(type, 'address', data.display_name)
+          toast.success('Location updated successfully!', { id: 'gps' })
+        } else {
+          toast.success('GPS coordinates saved!', { id: 'gps' })
+        }
+      } catch (err) {
+        toast.success('GPS coordinates saved!', { id: 'gps' })
+      }
+    }, () => {
+      toast.error('Unable to retrieve your location', { id: 'gps' })
+    })
   }
 
   // Mock Geocoding: Auto-locate when user types an address
@@ -242,6 +295,16 @@ export default function ShipParcelPage() {
                         </select>
                       )}
                       
+                      {/* Auto Location Trigger */}
+                      <button 
+                        type="button" 
+                        onClick={() => handleUseCurrentLocation('sender')}
+                        className="text-xs font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1 hover:underline"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                        Use My Location
+                      </button>
+
                       {/* Map Modal Trigger */}
                       <Sheet open={mapStates.sender.isOpen} onOpenChange={(val) => handleMapState('sender', 'isOpen', val)}>
                         <SheetTrigger asChild>
@@ -258,7 +321,7 @@ export default function ShipParcelPage() {
                           
                           <div className="w-full relative mt-4 overflow-hidden rounded-2xl border border-border h-[400px] sm:h-[500px] min-h-[400px]">
                             {mapStates.sender.isOpen && (
-                              <Map viewport={{ center: mapStates.sender.tempCoords, zoom: 14 }} className="w-full h-full">
+                              <Map mapStyle={satelliteMapStyle} viewport={{ center: mapStates.sender.tempCoords, zoom: 16 }} className="w-full h-full">
                                 <MapControls position="bottom-right" showZoom showLocate />
                                 <MapMarker
                                   longitude={mapStates.sender.tempCoords[0]}
@@ -337,7 +400,7 @@ export default function ShipParcelPage() {
                         
                         <div className="w-full relative mt-4 overflow-hidden rounded-2xl border border-border h-[400px] sm:h-[500px] min-h-[400px]">
                           {mapStates.receiver.isOpen && (
-                            <Map viewport={{ center: mapStates.receiver.tempCoords, zoom: 14 }} className="w-full h-full">
+                            <Map mapStyle={satelliteMapStyle} viewport={{ center: mapStates.receiver.tempCoords, zoom: 16 }} className="w-full h-full">
                               <MapControls position="bottom-right" showZoom showLocate />
                               <MapMarker
                                 longitude={mapStates.receiver.tempCoords[0]}
