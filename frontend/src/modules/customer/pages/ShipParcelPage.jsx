@@ -235,7 +235,7 @@ export default function ShipParcelPage() {
     })
   }, [formData.options, formData.parcel.weight])
 
-  const handleSubmit = (e) => {
+  /*const handleSubmit = (e) => {
     e.preventDefault()
     // Generate mock references
     const now = new Date()
@@ -251,6 +251,55 @@ export default function ShipParcelPage() {
     // Scroll to top on mobile to see the success message if needed, or let it stack.
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+*/
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/shipments",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: formData.sender,
+          receiver: formData.receiver,
+          parcel: formData.parcel,
+          options: formData.options,
+          costs,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+
+    setReferences({
+      shipmentRef: data.shipment.shipmentRef,
+      trackingNum: data.shipment.trackingNumber,
+      createdOn: new Date().toLocaleString(),
+    });
+
+    setIsSubmitted(true);
+
+    toast.success(data.message);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
+
+
 
   const handlePrint = () => {
     window.print()

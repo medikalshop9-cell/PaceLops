@@ -200,7 +200,7 @@ export default function CustomerDashboard() {
                 <Box className="w-8 h-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-bold text-foreground mb-1">No recent activity</h3>
-              <p className="text-sm text-muted-foreground max-w-sm">You haven't made any shipments or payments yet. Create a new shipment to get started.</p>
+              <p className="text-sm text-muted-foreground max-w-sm">You havent made any shipments or payments yet. Create a new shipment to get started.</p>
               <button onClick={() => navigate('/customer/new-shipment')} className="mt-6 flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
                 <PackagePlus className="w-4 h-4" /> Ship a Parcel
               </button>

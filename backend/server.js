@@ -267,10 +267,163 @@ app.post("/api/auth/verify-otp", async (req, res) => {
   }
 });
 /*
+
+
+
+
+
+
+
+
+
+
 |--------------------------------------------------------------------------
 | START SERVER
 |--------------------------------------------------------------------------
 */
+
+
+
+
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE SHIPMENT
+|--------------------------------------------------------------------------
+*/
+app.post("/api/shipments", async (req, res) => {
+  try {
+    const {
+      sender,
+      receiver,
+      parcel,
+      options,
+      costs,
+    } = req.body;
+
+    // Validation
+    if (
+      !sender.fullName ||
+      !sender.phone ||
+      !sender.email ||
+      !sender.address ||
+      !receiver.fullName ||
+      !receiver.phone ||
+      !receiver.email ||
+      !receiver.address ||
+      !parcel.type ||
+      !parcel.description ||
+      !parcel.estimatedValue ||
+      !options.pickupBranch
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please complete all required fields.",
+      });
+    }
+
+    const shipmentId = uuidv4();
+
+    const shipmentRef =
+      "SPX" + Date.now();
+
+    const trackingNumber =
+      "TRK" +
+      Math.floor(
+        100000000 + Math.random() * 900000000
+      );
+
+    await db.query(
+      `
+      INSERT INTO shipments (
+        id,
+        shipment_ref,
+        tracking_number,
+
+        sender_name,
+        sender_phone,
+        sender_email,
+        sender_address,
+
+        receiver_name,
+        receiver_phone,
+        receiver_email,
+        receiver_address,
+
+        parcel_type,
+        description,
+        weight,
+        estimated_value,
+        special_instructions,
+
+        pickup_branch,
+        delivery_method,
+        delivery_speed,
+
+        delivery_fee,
+        taxes,
+        total
+      )
+
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      `,
+      [
+        shipmentId,
+        shipmentRef,
+        trackingNumber,
+
+        sender.fullName,
+        sender.phone,
+        sender.email,
+        sender.address,
+
+        receiver.fullName,
+        receiver.phone,
+        receiver.email,
+        receiver.address,
+
+        parcel.type,
+        parcel.description,
+        parcel.weight || null,
+        parcel.estimatedValue,
+        parcel.instructions || null,
+
+        options.pickupBranch,
+        options.deliveryMethod,
+        options.deliverySpeed,
+
+        costs.deliveryFee,
+        costs.taxes,
+        costs.total,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Shipment created successfully",
+      shipment: {
+        id: shipmentId,
+        shipmentRef,
+        trackingNumber,
+      },
+    });
+  } catch (error) {
+    console.error("Shipment Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to create shipment",
+    });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

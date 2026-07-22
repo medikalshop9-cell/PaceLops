@@ -279,7 +279,7 @@ export default function MyParcelsPage() {
               <Package className="w-8 h-8 text-muted-foreground opacity-50" />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">No parcels found</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">We couldn't find any parcels matching your current filters or search query.</p>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">We couldnt find any parcels matching your current filters or search query.</p>
           </div>
         )}
 
