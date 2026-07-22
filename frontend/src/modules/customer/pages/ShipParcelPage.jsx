@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info, MapPin, Navigation } from 'lucide-react'
+import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info, MapPin, Navigation, Search } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -61,6 +61,8 @@ const InputField = ({ label, type = 'text', required = false, value, onChange, p
 
 export default function ShipParcelPage() {
   const navigate = useNavigate()
+  const senderMapRef = useRef(null)
+  const receiverMapRef = useRef(null)
   
   const { user } = useAuthStore()
   const { personalInfo, savedAddresses } = useProfileStore()
@@ -83,8 +85,8 @@ export default function ShipParcelPage() {
   })
 
   const [mapStates, setMapStates] = useState({
-    sender: { isOpen: false, tempCoords: [-0.2057, 5.556] },
-    receiver: { isOpen: false, tempCoords: [-0.2057, 5.556] }
+    sender: { isOpen: false, tempCoords: [-0.2057, 5.556], searchQuery: '' },
+    receiver: { isOpen: false, tempCoords: [-0.2057, 5.556], searchQuery: '' }
   })
 
   const handleMapState = (type, key, value) => {
@@ -140,6 +142,35 @@ export default function ShipParcelPage() {
     }, () => {
       toast.error('Unable to retrieve your location', { id: 'gps' })
     })
+  }
+
+  const handleMapSearch = async (type) => {
+    const query = mapStates[type].searchQuery
+    if (!query) return
+    
+    toast.loading('Searching...', { id: 'map-search' })
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+      const data = await res.json()
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0]
+        const lng = parseFloat(lon)
+        const lti = parseFloat(lat)
+        handleMapState(type, 'tempCoords', [lng, lti])
+        
+        if (type === 'sender') {
+          senderMapRef.current?.flyTo({ center: [lng, lti], zoom: 16, essential: true })
+        } else {
+          receiverMapRef.current?.flyTo({ center: [lng, lti], zoom: 16, essential: true })
+        }
+
+        toast.success('Location found! Drag the pin for precise placement.', { id: 'map-search' })
+      } else {
+        toast.error('Location not found', { id: 'map-search' })
+      }
+    } catch (err) {
+      toast.error('Search failed', { id: 'map-search' })
+    }
   }
 
   // Mock Geocoding: Auto-locate when user types an address
@@ -320,8 +351,26 @@ export default function ShipParcelPage() {
                           </SheetHeader>
                           
                           <div className="w-full relative mt-4 overflow-hidden rounded-2xl border border-border h-[400px] sm:h-[500px] min-h-[400px]">
+                            {/* Search overlay inside map */}
+                            <div className="absolute top-4 left-4 right-16 z-20 flex gap-2">
+                              <input 
+                                type="text"
+                                placeholder="Search location (e.g. Osu, Accra)"
+                                value={mapStates.sender.searchQuery}
+                                onChange={(e) => handleMapState('sender', 'searchQuery', e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleMapSearch('sender'))}
+                                className="flex-1 px-4 py-2 bg-background/95 backdrop-blur-md border border-border rounded-xl shadow-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => handleMapSearch('sender')}
+                                className="px-3 py-2 bg-primary text-primary-foreground rounded-xl shadow-lg hover:bg-primary/90 flex items-center justify-center shrink-0"
+                              >
+                                <Search className="w-4 h-4" />
+                              </button>
+                            </div>
                             {mapStates.sender.isOpen && (
-                              <Map mapStyle={satelliteMapStyle} viewport={{ center: mapStates.sender.tempCoords, zoom: 16 }} className="w-full h-full">
+                              <Map ref={senderMapRef} mapStyle={satelliteMapStyle} viewport={{ center: mapStates.sender.tempCoords, zoom: 16 }} className="w-full h-full">
                                 <MapControls position="bottom-right" showZoom showLocate />
                                 <MapMarker
                                   longitude={mapStates.sender.tempCoords[0]}
@@ -399,8 +448,26 @@ export default function ShipParcelPage() {
                         </SheetHeader>
                         
                         <div className="w-full relative mt-4 overflow-hidden rounded-2xl border border-border h-[400px] sm:h-[500px] min-h-[400px]">
+                          {/* Search overlay inside map */}
+                          <div className="absolute top-4 left-4 right-16 z-20 flex gap-2">
+                            <input 
+                              type="text"
+                              placeholder="Search location (e.g. Osu, Accra)"
+                              value={mapStates.receiver.searchQuery}
+                              onChange={(e) => handleMapState('receiver', 'searchQuery', e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleMapSearch('receiver'))}
+                              className="flex-1 px-4 py-2 bg-background/95 backdrop-blur-md border border-border rounded-xl shadow-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                            />
+                            <button 
+                              type="button"
+                              onClick={() => handleMapSearch('receiver')}
+                              className="px-3 py-2 bg-primary text-primary-foreground rounded-xl shadow-lg hover:bg-primary/90 flex items-center justify-center shrink-0"
+                            >
+                              <Search className="w-4 h-4" />
+                            </button>
+                          </div>
                           {mapStates.receiver.isOpen && (
-                            <Map mapStyle={satelliteMapStyle} viewport={{ center: mapStates.receiver.tempCoords, zoom: 16 }} className="w-full h-full">
+                            <Map ref={receiverMapRef} mapStyle={satelliteMapStyle} viewport={{ center: mapStates.receiver.tempCoords, zoom: 16 }} className="w-full h-full">
                               <MapControls position="bottom-right" showZoom showLocate />
                               <MapMarker
                                 longitude={mapStates.receiver.tempCoords[0]}
