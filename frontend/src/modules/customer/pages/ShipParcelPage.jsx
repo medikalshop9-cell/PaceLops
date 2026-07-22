@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info } from 'lucide-react'
+import { ChevronLeft, User, UserCheck, Package, Truck, Receipt, CheckCircle2, Copy, Printer, Info, MapPin } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useProfileStore } from '../store/useProfileStore'
+import { Map, MapMarker, MarkerContent, MapControls } from '@/components/ui/map'
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 
 // Helper component for Section Headers
 const SectionHeader = ({ icon: Icon, title, number }) => (
@@ -49,12 +51,63 @@ export default function ShipParcelPage() {
       fullName: user?.full_name || personalInfo?.name || '', 
       phone: personalInfo?.phone || '', 
       email: user?.email || personalInfo?.email || '', 
-      address: defaultAddress
+      address: defaultAddress,
+      coords: null
     },
-    receiver: { fullName: '', phone: '', email: '', address: '' },
+    receiver: { fullName: '', phone: '', email: '', address: '', coords: null },
     parcel: { type: 'document', description: '', weight: '', estimatedValue: '', instructions: '' },
     options: { pickupBranch: '', deliveryMethod: 'home', deliverySpeed: 'standard' }
   })
+
+  const [mapStates, setMapStates] = useState({
+    sender: { isOpen: false, tempCoords: [-0.2057, 5.556] },
+    receiver: { isOpen: false, tempCoords: [-0.2057, 5.556] }
+  })
+
+  const handleMapState = (type, key, value) => {
+    setMapStates(prev => ({ ...prev, [type]: { ...prev[type], [key]: value } }))
+  }
+
+  const handleConfirmLocation = async (type) => {
+    const coords = mapStates[type].tempCoords
+    
+    handleInputChange(type, 'coords', coords)
+    handleMapState(type, 'isOpen', false)
+    
+    try {
+      toast.loading('Fetching address...', { id: 'geocode' })
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords[1]}&lon=${coords[0]}`)
+      const data = await res.json()
+      if (data && data.display_name) {
+        handleInputChange(type, 'address', data.display_name)
+        toast.success('Address updated!', { id: 'geocode' })
+      } else {
+        toast.dismiss('geocode')
+      }
+    } catch (err) {
+      toast.error('Could not fetch address.', { id: 'geocode' })
+    }
+  }
+
+  // Mock Geocoding: Auto-locate when user types an address
+  useEffect(() => {
+    const mockCities = [
+      { name: 'accra', coords: [-0.2057, 5.556] },
+      { name: 'kumasi', coords: [-1.6163, 6.6885] },
+      { name: 'tema', coords: [-0.0166, 5.6667] },
+      { name: 'takoradi', coords: [-1.761, 4.894] },
+    ]
+
+    const senderMatch = mockCities.find(c => formData.sender.address.toLowerCase().includes(c.name))
+    if (senderMatch && !formData.sender.coords) {
+      handleMapState('sender', 'tempCoords', senderMatch.coords)
+    }
+
+    const receiverMatch = mockCities.find(c => formData.receiver.address.toLowerCase().includes(c.name))
+    if (receiverMatch && !formData.receiver.coords) {
+      handleMapState('receiver', 'tempCoords', receiverMatch.coords)
+    }
+  }, [formData.sender.address, formData.receiver.address])
 
   // Computed Costs
   const [costs, setCosts] = useState({ deliveryFee: 0, taxes: 0, total: 0 })
@@ -170,24 +223,74 @@ export default function ShipParcelPage() {
                 <div className="sm:col-span-2 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
-                    {savedAddresses && savedAddresses.length > 0 && (
-                      <select 
-                        className="text-xs text-primary bg-primary/10 border-none outline-none cursor-pointer rounded px-2 py-1 appearance-none hover:bg-primary/20 transition-colors"
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            handleInputChange('sender', 'address', e.target.value)
-                            // Reset select value after choosing
-                            e.target.value = ""
-                          }
-                        }}
-                        defaultValue=""
-                      >
-                        <option value="" disabled>Use saved address...</option>
-                        {savedAddresses.map(addr => (
-                          <option key={addr.id} value={addr.address}>{addr.label}</option>
-                        ))}
-                      </select>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {savedAddresses && savedAddresses.length > 0 && (
+                        <select 
+                          className="text-xs text-primary bg-primary/10 border-none outline-none cursor-pointer rounded px-2 py-1 appearance-none hover:bg-primary/20 transition-colors"
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleInputChange('sender', 'address', e.target.value)
+                              e.target.value = ""
+                            }
+                          }}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Use saved address...</option>
+                          {savedAddresses.map(addr => (
+                            <option key={addr.id} value={addr.address}>{addr.label}</option>
+                          ))}
+                        </select>
+                      )}
+                      
+                      {/* Map Modal Trigger */}
+                      <Sheet open={mapStates.sender.isOpen} onOpenChange={(val) => handleMapState('sender', 'isOpen', val)}>
+                        <SheetTrigger asChild>
+                          <button type="button" className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                            <MapPin className="w-3.5 h-3.5" />
+                            Pinpoint on Map
+                          </button>
+                        </SheetTrigger>
+                        <SheetContent side="bottom" className="h-[80vh] sm:h-[85vh] rounded-t-[24px]">
+                          <SheetHeader>
+                            <SheetTitle>Pinpoint Sender Location</SheetTitle>
+                            <SheetDescription>Drag the pin to your exact GPS location for an accurate pickup.</SheetDescription>
+                          </SheetHeader>
+                          
+                          <div className="w-full relative mt-4 overflow-hidden rounded-2xl border border-border h-[400px] sm:h-[500px] min-h-[400px]">
+                            {mapStates.sender.isOpen && (
+                              <Map viewport={{ center: mapStates.sender.tempCoords, zoom: 14 }} className="w-full h-full">
+                                <MapControls position="bottom-right" showZoom showLocate />
+                                <MapMarker
+                                  longitude={mapStates.sender.tempCoords[0]}
+                                  latitude={mapStates.sender.tempCoords[1]}
+                                  draggable
+                                  onDragEnd={(e) => handleMapState('sender', 'tempCoords', [e.lng, e.lat])}
+                                >
+                                  <MarkerContent>
+                                    <div className="relative flex flex-col items-center cursor-move">
+                                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg z-10 relative -top-4">
+                                        <MapPin className="w-4 h-4" />
+                                      </div>
+                                      <div className="w-3 h-1.5 bg-black/30 rounded-full blur-[2px] absolute bottom-0" />
+                                    </div>
+                                  </MarkerContent>
+                                </MapMarker>
+                              </Map>
+                            )}
+                          </div>
+                          
+                          <SheetFooter className="mt-4">
+                            <button 
+                              type="button"
+                              onClick={() => handleConfirmLocation('sender')}
+                              className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+                            >
+                              Confirm Location
+                            </button>
+                          </SheetFooter>
+                        </SheetContent>
+                      </Sheet>
+                    </div>
                   </div>
                   <textarea 
                     required
@@ -197,6 +300,12 @@ export default function ShipParcelPage() {
                     rows={3}
                     className="w-full px-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm resize-none"
                   />
+                  {formData.sender.coords && (
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      GPS Pinned: {formData.sender.coords[1].toFixed(4)}, {formData.sender.coords[0].toFixed(4)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -209,7 +318,58 @@ export default function ShipParcelPage() {
                 <InputField disabled={isSubmitted} label="Phone Number" type="tel" required value={formData.receiver.phone} onChange={e => handleInputChange('receiver', 'phone', e.target.value)} placeholder="Enter phone number" />
                 <InputField disabled={isSubmitted} label="Email" type="email" required value={formData.receiver.email} onChange={e => handleInputChange('receiver', 'email', e.target.value)} placeholder="Enter email address" className="sm:col-span-2" />
                 <div className="sm:col-span-2 space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-foreground">Address <span className="text-red-500">*</span></label>
+                    
+                    {/* Map Modal Trigger */}
+                    <Sheet open={mapStates.receiver.isOpen} onOpenChange={(val) => handleMapState('receiver', 'isOpen', val)}>
+                      <SheetTrigger asChild>
+                        <button type="button" className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                          <MapPin className="w-3.5 h-3.5" />
+                          Pinpoint on Map
+                        </button>
+                      </SheetTrigger>
+                      <SheetContent side="bottom" className="h-[80vh] sm:h-[85vh] rounded-t-[24px]">
+                        <SheetHeader>
+                          <SheetTitle>Pinpoint Receiver Location</SheetTitle>
+                          <SheetDescription>Drag the pin to the exact GPS location for an accurate delivery.</SheetDescription>
+                        </SheetHeader>
+                        
+                        <div className="w-full relative mt-4 overflow-hidden rounded-2xl border border-border h-[400px] sm:h-[500px] min-h-[400px]">
+                          {mapStates.receiver.isOpen && (
+                            <Map viewport={{ center: mapStates.receiver.tempCoords, zoom: 14 }} className="w-full h-full">
+                              <MapControls position="bottom-right" showZoom showLocate />
+                              <MapMarker
+                                longitude={mapStates.receiver.tempCoords[0]}
+                                latitude={mapStates.receiver.tempCoords[1]}
+                                draggable
+                                onDragEnd={(e) => handleMapState('receiver', 'tempCoords', [e.lng, e.lat])}
+                              >
+                                <MarkerContent>
+                                  <div className="relative flex flex-col items-center cursor-move">
+                                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg z-10 relative -top-4">
+                                      <MapPin className="w-4 h-4" />
+                                    </div>
+                                    <div className="w-3 h-1.5 bg-black/30 rounded-full blur-[2px] absolute bottom-0" />
+                                  </div>
+                                </MarkerContent>
+                              </MapMarker>
+                            </Map>
+                          )}
+                        </div>
+                        
+                        <SheetFooter className="mt-4">
+                          <button 
+                            type="button"
+                            onClick={() => handleConfirmLocation('receiver')}
+                            className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+                          >
+                            Confirm Location
+                          </button>
+                        </SheetFooter>
+                      </SheetContent>
+                    </Sheet>
+                  </div>
                   <textarea 
                     required
                     value={formData.receiver.address}
@@ -218,6 +378,12 @@ export default function ShipParcelPage() {
                     rows={3}
                     className="w-full px-4 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm resize-none"
                   />
+                  {formData.receiver.coords && (
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      GPS Pinned: {formData.receiver.coords[1].toFixed(4)}, {formData.receiver.coords[0].toFixed(4)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

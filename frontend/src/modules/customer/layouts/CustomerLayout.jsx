@@ -79,8 +79,8 @@ const SidebarContent = ({ currentPath, setIsMenuOpen, isCollapsed, setIsCollapse
             to="/customer/dashboard"
             onClick={() => setIsMenuOpen(false)}
             className={cn(
-              "flex items-center rounded-xl transition-all duration-300 font-medium",
-              isCollapsed ? "justify-center p-3 mx-2" : "gap-3 px-4 py-3 mx-2",
+              "flex items-center rounded-xl transition-all duration-300 font-medium w-full",
+              isCollapsed ? "justify-center p-3 mx-auto max-w-[56px]" : "gap-3 px-4 py-3 mx-2",
               currentPath.startsWith('/customer/dashboard')
                 ? "bg-muted text-primary shadow-sm ring-1 ring-border"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -109,8 +109,8 @@ const SidebarContent = ({ currentPath, setIsMenuOpen, isCollapsed, setIsCollapse
                 const isActive = currentPath.startsWith(link.path)
 
                 const linkClasses = cn(
-                  "flex items-center rounded-xl transition-all duration-300 font-medium text-[14px]",
-                  isCollapsed ? "justify-center p-3" : "gap-3 px-4 py-2.5",
+                  "flex items-center rounded-xl transition-all duration-300 font-medium text-[14px] w-full",
+                  isCollapsed ? "justify-center p-3 mx-auto max-w-[56px]" : "gap-3 px-4 py-2.5",
                   isActive
                     ? "bg-muted text-primary shadow-sm ring-1 ring-border"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -121,7 +121,7 @@ const SidebarContent = ({ currentPath, setIsMenuOpen, isCollapsed, setIsCollapse
                 if (link.name === 'Notifications') {
                   return (
                     <NotificationsDrawer key={link.name}>
-                      <button className={cn(linkClasses, "w-full")} title={isCollapsed ? link.name : undefined}>
+                      <button className={linkClasses} title={isCollapsed ? link.name : undefined}>
                         <Icon className={iconClasses} />
                         {!isCollapsed && <span className="truncate">{link.name}</span>}
                       </button>
@@ -153,8 +153,8 @@ const SidebarContent = ({ currentPath, setIsMenuOpen, isCollapsed, setIsCollapse
           <Link
             to="/customer/support"
             className={cn(
-              "flex items-center rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-accent transition-colors ring-1 ring-border group",
-              isCollapsed ? "p-2.5 justify-center w-full" : "gap-3 px-3 py-2.5"
+              "flex items-center rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-accent transition-colors ring-1 ring-border group w-full",
+              isCollapsed ? "p-2.5 justify-center mx-auto max-w-[56px]" : "gap-3 px-3 py-2.5"
             )}
             title={isCollapsed ? "Help & Support" : undefined}
           >
@@ -165,8 +165,8 @@ const SidebarContent = ({ currentPath, setIsMenuOpen, isCollapsed, setIsCollapse
           <Link
             to="/login"
             className={cn(
-              "flex items-center rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
-              isCollapsed ? "p-2.5 justify-center w-full" : "gap-3 px-3 py-2.5"
+              "flex items-center rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors w-full",
+              isCollapsed ? "p-2.5 justify-center mx-auto max-w-[56px]" : "gap-3 px-3 py-2.5"
             )}
             title={isCollapsed ? "Logout" : undefined}
           >

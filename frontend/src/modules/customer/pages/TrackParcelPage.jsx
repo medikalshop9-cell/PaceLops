@@ -5,11 +5,12 @@ import {
   AlertTriangle, RotateCcw, PackageCheck, X, Copy, Check,
   ArrowRight, Box, User, Phone, Mail, Calendar, Zap,
   ChevronRight, PackageSearch, ScanLine, MessageCircle,
-  Sparkles, Navigation, Weight, Hash, Shield, ExternalLink, ChevronDown, ArrowLeft,
+  Sparkles, Navigation, Weight, Hash, Shield, ExternalLink, ChevronDown, ArrowLeft, Globe
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { trackParcel } from '../services/tracking.service'
 import { mockParcels } from '../data/mockParcels'
+import { Map, MapMarker, MarkerContent, MapRoute } from '@/components/ui/map'
 
 // ─────────────────────────────────────────────
 // STATUS CONFIG (FR-010)
@@ -763,6 +764,120 @@ function ParcelDetailsPanel({ parcel }) {
 }
 
 // ─────────────────────────────────────────────
+// LIVE MAP PANEL
+// ─────────────────────────────────────────────
+const CITY_COORDS = {
+  'Accra Central': [-0.2057, 5.556],
+  'Kumasi Main Hub': [-1.6163, 6.6885],
+  'Takoradi': [-1.761, 4.894],
+  'Tema': [-0.0166, 5.6667],
+  'Spintex': [-0.1417, 5.626],
+  'Ridge': [-0.1932, 5.559],
+  'Unknown': [-0.2057, 5.556],
+}
+
+function getCoords(locationStr) {
+  if (!locationStr) return CITY_COORDS['Accra Central']
+  const loc = Object.keys(CITY_COORDS).find(k => locationStr.includes(k))
+  return loc ? CITY_COORDS[loc] : CITY_COORDS['Accra Central']
+}
+
+function LiveMapPanel({ parcel }) {
+  const cfg = STATUS_CONFIG[parcel.status] || STATUS_CONFIG.pending
+  
+  const originLoc = parcel.timeline?.[0]?.location || 'Accra Central'
+  const destLoc = parcel.receiver.address || 'Kumasi Main Hub'
+  const currentLoc = parcel.currentBranch || originLoc
+
+  const originCoords = getCoords(originLoc)
+  const destCoords = getCoords(destLoc)
+  
+  // If we are at origin or destination exactly, just use those coords, else interpolate slightly for effect
+  const isComplete = parcel.status === 'delivered' || parcel.status === 'collected'
+  const currentCoords = isComplete ? destCoords : getCoords(currentLoc)
+
+  const center = [
+    (originCoords[0] + destCoords[0]) / 2,
+    (originCoords[1] + destCoords[1]) / 2
+  ]
+
+  // Add some slight curvature or middle points to the route
+  const midPoint = [
+    originCoords[0] + (destCoords[0] - originCoords[0]) * 0.5 - 0.2, // offset longitude to create a bow
+    originCoords[1] + (destCoords[1] - originCoords[1]) * 0.5
+  ]
+
+  const mockRoute = [
+    originCoords,
+    midPoint,
+    destCoords
+  ]
+
+  return (
+    <div className="relative overflow-hidden bg-card border border-border rounded-[24px] shadow-[var(--card-shadow)] h-[450px] mt-4 animate-scale-up group">
+      <Map
+        viewport={{
+          center: center,
+          zoom: 6.5,
+          pitch: 45
+        }}
+        className="w-full h-full"
+      >
+        {/* Origin Marker */}
+        <MapMarker longitude={originCoords[0]} latitude={originCoords[1]}>
+          <MarkerContent>
+            <div className="relative w-5 h-5 rounded-full border-4 border-card bg-primary shadow-lg flex items-center justify-center z-10" />
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 bg-background border border-border rounded-md shadow-sm text-[10px] font-bold text-muted-foreground whitespace-nowrap">Origin</div>
+          </MarkerContent>
+        </MapMarker>
+
+        {/* Destination Marker */}
+        <MapMarker longitude={destCoords[0]} latitude={destCoords[1]}>
+          <MarkerContent>
+            <div className="relative flex flex-col items-center">
+              <MapPin className="w-7 h-7 text-red-500 drop-shadow-md z-10 relative -top-3" />
+              <div className="w-3 h-1.5 bg-black/20 rounded-full blur-[2px] absolute bottom-0" />
+            </div>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 bg-background border border-border rounded-md shadow-sm text-[10px] font-bold text-muted-foreground whitespace-nowrap">Destination</div>
+          </MarkerContent>
+        </MapMarker>
+
+        {/* Route Line */}
+        <MapRoute
+          coordinates={mockRoute}
+          color="#3b82f6"
+          width={4}
+          opacity={0.5}
+          dashArray={[2, 2]}
+        />
+
+        {/* Current Location (Truck) */}
+        {!isComplete && parcel.status !== 'pending' && (
+          <MapMarker longitude={currentCoords[0]} latitude={currentCoords[1]}>
+            <MarkerContent>
+              <div className={cn("w-11 h-11 rounded-2xl bg-card border flex items-center justify-center shadow-xl relative z-20 transition-transform hover:scale-110", cfg.border)}>
+                <span className={cn('absolute inset-0 rounded-2xl animate-ping opacity-20', cfg.bg)} />
+                <Truck className={cn("w-5 h-5", cfg.color)} />
+              </div>
+            </MarkerContent>
+          </MapMarker>
+        )}
+      </Map>
+
+      {/* Gradients to blend map seamlessly */}
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-card/80 to-transparent pointer-events-none" />
+      
+      {/* Live Indicator overlay */}
+      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-xl bg-card/80 backdrop-blur-md border border-border shadow-lg flex items-center gap-2 pointer-events-none">
+        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="text-xs font-bold text-foreground">Live GPS Tracker</span>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────
 export default function TrackParcelPage() {
@@ -770,7 +885,7 @@ export default function TrackParcelPage() {
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [result, setResult] = useState(null)
   const [pageStatus, setPageStatus] = useState('idle') // idle | loading | found | not_found
-  const [activeTab, setActiveTab] = useState('timeline')
+  const [activeTab, setActiveTab] = useState('live_map')
   const [recent, setRecent] = useState(getRecent)
   const inputRef = useRef(null)
   const resultRef = useRef(null)
@@ -780,7 +895,7 @@ export default function TrackParcelPage() {
     if (!val) return
     setPageStatus('loading')
     setResult(null)
-    setActiveTab('timeline')
+    setActiveTab('live_map')
     try {
       const data = await trackParcel(val)
       setResult(data)
@@ -922,6 +1037,7 @@ export default function TrackParcelPage() {
             <div className="flex gap-1 bg-muted/80 dark:bg-muted p-1.5 rounded-2xl w-fit shadow-inner">
               {[
                 { id: 'timeline', label: 'Timeline', icon: Clock, count: result.timeline?.length },
+                { id: 'live_map', label: 'Live Map', icon: Globe },
                 { id: 'details', label: 'Details', icon: Package },
               ].map(tab => {
                 const TabIcon = tab.icon
@@ -955,6 +1071,7 @@ export default function TrackParcelPage() {
             {/* Tab Content */}
             <div key={activeTab} className="animate-scale-up">
               {activeTab === 'timeline' && <TrackingTimeline parcel={result} />}
+              {activeTab === 'live_map' && <LiveMapPanel parcel={result} />}
               {activeTab === 'details' && <ParcelDetailsPanel parcel={result} />}
             </div>
           </div>
