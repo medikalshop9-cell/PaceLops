@@ -3,9 +3,11 @@ import CustomerDashboard from './pages/CustomerDashboard'
 import ShipParcelPage from './pages/ShipParcelPage'
 import MyParcelsPage from './pages/MyParcelsPage'
 import PickupSchedulingPage from './pages/PickupSchedulingPage'
-
+import TrackParcelPage from './pages/TrackParcelPage'
 import DeliveryRequestsPage from './pages/DeliveryRequestsPage'
 import ProfilePage from './pages/ProfilePage'
+import HelpSupportPage from './pages/HelpSupportPage'
+import PaymentsPage from './pages/PaymentsPage'
 
 export const customerRoutes = [
   {
@@ -28,10 +30,13 @@ export const customerRoutes = [
         path: 'profile',
         element: <ProfilePage />,
       },
-      // Placeholders for other routes mentioned in the navigation
+      {
+        path: 'support',
+        element: <HelpSupportPage />,
+      },
       {
         path: 'track',
-        element: <div className="p-6">Track Parcel Page Placeholder</div>,
+        element: <TrackParcelPage />,
       },
       {
         path: 'new-shipment',
@@ -43,7 +48,7 @@ export const customerRoutes = [
       },
       {
         path: 'payment',
-        element: <div className="p-6">Payment Page Placeholder</div>,
+        element: <PaymentsPage />,
       },
       {
         path: 'my-parcels',
