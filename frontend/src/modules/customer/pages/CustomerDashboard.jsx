@@ -3,6 +3,16 @@ import { useOutletContext, useNavigate } from 'react-router-dom'
 import { PackagePlus, MapPin, CalendarDays, Truck, CheckCircle2, ArrowRight, MoreVertical, AlertCircle, RefreshCw, Box, Activity, CreditCard } from 'lucide-react'
 import truckViz from '@/assets/images/Transparent 3D.png'
 import { dashboardService } from '../services/dashboard.service'
+import { Map, MapMarker, MarkerContent, MapPopup, MapControls } from '@/components/ui/map'
+import { mockParcels } from '../data/mockParcels'
+
+const branchCoords = {
+  'Accra Central': [-0.2057, 5.556],
+  'Kumasi Main Hub': [-1.6244, 6.6885],
+  'Tema Port Hub': [-0.0166, 5.6698],
+  'Takoradi': [-1.7731, 4.8845],
+  'Accra Sorting Facility': [-0.1869, 5.6037]
+}
 
 export default function CustomerDashboard() {
   const { setIsMenuOpen } = useOutletContext()
@@ -13,6 +23,7 @@ export default function CustomerDashboard() {
   const [activities, setActivities] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [activePopup, setActivePopup] = useState(null)
 
   const fetchDashboardData = async () => {
     if (!user?.id) return;
@@ -46,6 +57,8 @@ export default function CustomerDashboard() {
       default: return <Activity className="w-5 h-5 text-muted-foreground" />
     }
   }
+
+  const activeShipments = mockParcels.filter(p => p.status === 'in_transit' || p.status === 'pending' || p.status === 'ready_for_pickup')
 
   return (
     <div className="py-8 space-y-10 pb-24">
@@ -161,6 +174,55 @@ export default function CustomerDashboard() {
             </div>
           )
         })}
+        </div>
+      </div>
+
+      {/* Active Shipments Map */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h3 className="text-xl font-bold text-foreground tracking-tight">Live Shipments</h3>
+        </div>
+        <div className="bg-card border border-border rounded-[24px] p-2 h-[400px] overflow-hidden shadow-sm relative">
+          <Map viewport={{ center: [-1.0232, 6.5244], zoom: 5.5 }} className="w-full h-full rounded-[20px]">
+            <MapControls position="bottom-right" showZoom />
+            
+            {activeShipments.map(parcel => {
+              const coords = branchCoords[parcel.currentBranch] || [-0.2057, 5.556]
+              return (
+                <MapMarker key={parcel.id} longitude={coords[0]} latitude={coords[1]}>
+                  <MarkerContent>
+                    <div 
+                      className="relative group cursor-pointer flex items-center justify-center"
+                      onClick={() => setActivePopup(parcel.id)}
+                    >
+                      <div className="w-4 h-4 bg-primary rounded-full border-[3px] border-white dark:border-background shadow-[0_0_12px_rgba(0,0,0,0.4)] relative z-10" />
+                      <div className="absolute w-8 h-8 bg-primary/30 rounded-full animate-ping" />
+                    </div>
+                  </MarkerContent>
+                  {activePopup === parcel.id && (
+                    <MapPopup 
+                      longitude={coords[0]} 
+                      latitude={coords[1]} 
+                      closeButton 
+                      onClose={() => setActivePopup(null)}
+                      offset={14}
+                    >
+                      <div className="p-1 min-w-[120px]">
+                        <p className="text-xs font-bold text-foreground">{parcel.trackingNumber}</p>
+                        <p className="text-[10px] text-muted-foreground mb-1">{parcel.currentBranch}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-primary uppercase">{parcel.status.replace(/_/g, ' ')}</span>
+                          {parcel.estimatedDelivery && (
+                            <span className="text-[9px] text-muted-foreground">ETA: {new Date(parcel.estimatedDelivery).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </div>
+                    </MapPopup>
+                  )}
+                </MapMarker>
+              )
+            })}
+          </Map>
         </div>
       </div>
 
