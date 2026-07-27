@@ -13,6 +13,81 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Helper to auto-create database and tables
+async function initDatabase() {
+  const host = process.env.DB_HOST || "localhost";
+  const user = process.env.DB_USER || "root";
+  const password = process.env.DB_PASSWORD || "";
+  const database = process.env.DB_NAME || "parcelops";
+
+  try {
+    // 1. Connect without selecting database to ensure database exists
+    const rootConnection = await mysql.createConnection({ host, user, password });
+    await rootConnection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+    await rootConnection.end();
+
+    // 2. Connect with pool and create tables if they do not exist
+    const connection = await db.getConnection();
+    console.log(`✅ Connected to MySQL database: ${database}`);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user (
+        id            VARCHAR(36)  NOT NULL PRIMARY KEY,
+        full_name     VARCHAR(255) NOT NULL,
+        email         VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        role          ENUM('customer', 'worker', 'admin') NOT NULL DEFAULT 'customer',
+        created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS otp_codes (
+        id         VARCHAR(36)  NOT NULL PRIMARY KEY,
+        email      VARCHAR(255) NOT NULL,
+        otp_code   VARCHAR(10)  NOT NULL,
+        expires_at DATETIME     NOT NULL,
+        created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_otp_email (email)
+      ) ENGINE=InnoDB;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS shipments (
+        id                   VARCHAR(36) NOT NULL PRIMARY KEY,
+        shipment_ref         VARCHAR(255),
+        tracking_number      VARCHAR(255),
+        sender_name          VARCHAR(255),
+        sender_phone         VARCHAR(255),
+        sender_email         VARCHAR(255),
+        sender_address       TEXT,
+        receiver_name        VARCHAR(255),
+        receiver_phone       VARCHAR(255),
+        receiver_email       VARCHAR(255),
+        receiver_address     TEXT,
+        parcel_type          VARCHAR(255),
+        description          TEXT,
+        weight               VARCHAR(50),
+        estimated_value      DECIMAL(10,2),
+        special_instructions TEXT,
+        pickup_branch        VARCHAR(255),
+        delivery_method      VARCHAR(255),
+        delivery_speed       VARCHAR(255),
+        delivery_fee         DECIMAL(10,2),
+        taxes                DECIMAL(10,2),
+        total                DECIMAL(10,2),
+        created_at           DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB;
+    `);
+
+    console.log("✅ All database tables verified/created successfully.");
+    connection.release();
+  } catch (error) {
+    console.error("❌ Database initialization error:", error);
+  }
+}
+
 // MySQL Connection Pool
 const db = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
@@ -23,16 +98,7 @@ const db = mysql.createPool({
   connectionLimit: 10,
 });
 
-// Test DB Connection
-(async () => {
-  try {
-    const connection = await db.getConnection();
-    console.log("✅ Connected to MySQL database");
-    connection.release();
-  } catch (error) {
-    console.error("❌ Database connection failed:", error);
-  }
-})();
+initDatabase();
 
 /*
 |--------------------------------------------------------------------------
