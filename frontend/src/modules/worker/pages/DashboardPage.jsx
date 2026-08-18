@@ -5,6 +5,21 @@ import {
   Calendar, Copy, ChevronLeft, ChevronRight, ArrowUpDown, Check, ArrowUpRight, ArrowDownRight, Layers
 } from 'lucide-react'
 import { useWorkerStore } from '../store/useWorkerStore'
+import { useEffect } from 'react'
+import { useLottie } from 'lottie-react'
+import { useRive } from '@rive-app/react-canvas'
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer
+} from 'recharts'
+
+const EmptyLottie = ({ animationData }) => {
+  const options = {
+    animationData,
+    loop: true,
+  }
+  const { View } = useLottie(options)
+  return View
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -20,6 +35,21 @@ export default function DashboardPage() {
   const [timeframe, setTimeframe] = useState('Feb 2022')
   const [chartTimeframe, setChartTimeframe] = useState('Feb 2023')
   const [copiedTracking, setCopiedTracking] = useState(false)
+  const [emptyLottieData, setEmptyLottieData] = useState(null)
+
+  useEffect(() => {
+    // Fetch a beautiful open-source Lottie animation for the empty state (Magnifying glass/Empty Box)
+    fetch('https://raw.githubusercontent.com/LottieFiles/lottie-animations/master/animations/empty-box.json')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setEmptyLottieData(data) })
+      .catch(err => console.error("Failed to load Lottie animation", err))
+  }, [])
+
+  // Rive Mascot
+  const { RiveComponent } = useRive({
+    src: 'https://cdn.rive.app/animations/vehicles.riv', // Simple open-source Rive animation as placeholder
+    autoplay: true,
+  })
 
   // Live Tracking shipment carousel state derived from real parcels
   const liveShipments = parcels.length > 0 ? parcels.map((p) => ({
@@ -99,36 +129,36 @@ export default function DashboardPage() {
     document.body.removeChild(link)
   }
 
-  // SVG Chart Dimensions & Curves
-  const chartHeight = 220
-  const chartWidth = 720
-
-  const pointsCoords = chartPoints.map((p, idx) => {
-    const x = 40 + idx * 80
-    const y = chartHeight - (p.val / 750) * (chartHeight - 40) - 20
-    return { x, y, ...p }
-  })
-
-  const svgPath = pointsCoords.reduce((acc, point, i, a) => {
-    if (i === 0) return `M ${point.x},${point.y}`
-    const prev = a[i - 1]
-    const cx1 = prev.x + (point.x - prev.x) / 2
-    const cy1 = prev.y
-    const cx2 = prev.x + (point.x - prev.x) / 2
-    const cy2 = point.y
-    return `${acc} C ${cx1},${cy1} ${cx2},${cy2} ${point.x},${point.y}`
-  }, '')
-
-  const svgAreaPath = `${svgPath} L ${pointsCoords[pointsCoords.length - 1].x},${chartHeight - 10} L ${pointsCoords[0].x},${chartHeight - 10} Z`
+  // Custom Tooltip for Recharts
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      return (
+        <div className="bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap">
+          <span className="w-2 h-2 rounded-full bg-amber-400" />
+          <span>{data.dateStr}</span>
+          <span className="font-mono text-slate-200 border-l border-slate-700 pl-2">
+            {data.displayVal || data.val}
+          </span>
+        </div>
+      )
+    }
+    return null
+  }
 
   return (
     <div className="space-y-6 pb-12 font-sans text-slate-800">
       
       {/* ─── Top Header Section ─── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div>
-          <span className="text-xs font-semibold text-slate-400 block tracking-tight">Hello Admin,</span>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Good Morning</h1>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+            <RiveComponent className="w-full h-full scale-[1.5]" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-400 block tracking-tight">Hello Admin,</span>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Good Morning</h1>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -254,75 +284,43 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="relative w-full overflow-x-auto">
-            <div className="min-w-[650px] relative">
-              {pointsCoords[hoveredPointIndex] && (
-                <div
-                  className="absolute z-20 transition-all duration-200 -translate-x-1/2 pointer-events-none"
-                  style={{
-                    left: `${pointsCoords[hoveredPointIndex].x}px`,
-                    top: `${pointsCoords[hoveredPointIndex].y - 45}px`,
-                  }}
-                >
-                  <div className="bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span>{pointsCoords[hoveredPointIndex].dateStr}</span>
-                    <span className="font-mono text-slate-200 border-l border-slate-700 pl-2">
-                      {pointsCoords[hoveredPointIndex].displayVal || pointsCoords[hoveredPointIndex].val}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto overflow-visible">
+          <div className="relative w-full h-[250px] mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.18" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-
-                {[700, 500, 300, 100, 0].map((val) => {
-                  const y = chartHeight - (val / 750) * (chartHeight - 40) - 20
-                  return (
-                    <g key={val}>
-                      <line x1="30" y1={y} x2={chartWidth} y2={y} stroke="#f1f5f9" strokeDasharray="4 4" />
-                      <text x="10" y={y + 4} fill="#94a3b8" fontSize="10" fontWeight="600">
-                        {val}
-                      </text>
-                    </g>
-                  )
-                })}
-
-                <path d={svgAreaPath} fill="url(#chartGradient)" />
-                <path d={svgPath} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" />
-
-                {pointsCoords.map((pt, idx) => {
-                  const isSelected = idx === hoveredPointIndex
-                  return (
-                    <g
-                      key={idx}
-                      className="cursor-pointer group"
-                      onMouseEnter={() => setHoveredPointIndex(idx)}
-                      onClick={() => setHoveredPointIndex(idx)}
-                    >
-                      <text x={pt.x} y={chartHeight + 12} textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600">
-                        {pt.day}
-                      </text>
-                      <circle cx={pt.x} cy={pt.y} r="14" fill="transparent" />
-                      {isSelected ? (
-                        <>
-                          <circle cx={pt.x} cy={pt.y} r="8" fill="#2563eb" fillOpacity="0.25" />
-                          <circle cx={pt.x} cy={pt.y} r="5" fill="#2563eb" stroke="#ffffff" strokeWidth="2.5" />
-                        </>
-                      ) : (
-                        <circle cx={pt.x} cy={pt.y} r="3.5" fill="#ffffff" stroke="#2563eb" strokeWidth="2" />
-                      )}
-                    </g>
-                  )
-                })}
-              </svg>
-            </div>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="day" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                <Area 
+                  type="monotone" 
+                  dataKey="val" 
+                  stroke="#2563eb" 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#chartGradient)" 
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                  activeDot={{ r: 6, strokeWidth: 3, stroke: '#ffffff', fill: '#2563eb' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -434,7 +432,21 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {parcels.map((order) => {
+              {parcels.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    {emptyLottieData ? (
+                      <div className="w-48 h-48 mx-auto opacity-70">
+                        <EmptyLottie animationData={emptyLottieData} />
+                      </div>
+                    ) : (
+                      <div className="w-48 h-48 mx-auto bg-slate-50 animate-pulse rounded-xl" />
+                    )}
+                    <h3 className="text-sm font-black text-slate-800 mt-2">No incoming orders yet</h3>
+                    <p className="text-xs text-slate-400 mt-1">When customers submit new parcels, they will appear here.</p>
+                  </td>
+                </tr>
+              ) : parcels.map((order) => {
                 const isChecked = selectedOrders.includes(order.id)
                 return (
                   <tr

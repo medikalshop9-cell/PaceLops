@@ -107,7 +107,7 @@ export default function LandingPage() {
   const [trackingId, setTrackingId] = useState('')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const navigate = useNavigate()
-  
+
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function LandingPage() {
     let images = document.querySelectorAll(`.${s.gsapBg}`)
     let outerWrappers = gsap.utils.toArray(`.${s.gsapOuter}`)
     let innerWrappers = gsap.utils.toArray(`.${s.gsapInner}`)
-    
+
     let currentIndex = -1
     let wrap = gsap.utils.wrap(0, sections.length)
     let animating = false
@@ -132,43 +132,43 @@ export default function LandingPage() {
         defaults: { duration: 1.25, ease: 'power1.inOut' },
         onComplete: () => { animating = false }
       })
-      
+
       if (currentIndex >= 0) {
         gsap.set(sections[currentIndex], { zIndex: 0 })
         tl.to(images[currentIndex], { yPercent: -15 * dFactor })
           .set(sections[currentIndex], { autoAlpha: 0 })
       }
-      
+
       gsap.set(sections[index], { autoAlpha: 1, zIndex: 1 })
-      
+
       let currentChars = sections[index].querySelectorAll('.split-char')
-      
-      tl.fromTo([outerWrappers[index], innerWrappers[index]], { 
-          yPercent: i => i ? -100 * dFactor : 100 * dFactor
-        }, { 
-          yPercent: 0 
-        }, 0)
+
+      tl.fromTo([outerWrappers[index], innerWrappers[index]], {
+        yPercent: i => i ? -100 * dFactor : 100 * dFactor
+      }, {
+        yPercent: 0
+      }, 0)
         .fromTo(images[index], { yPercent: 15 * dFactor }, { yPercent: 0 }, 0)
-        
+
       if (currentChars.length > 0) {
-        tl.fromTo(currentChars, { 
-            autoAlpha: 0, 
-            yPercent: 150 * dFactor
+        tl.fromTo(currentChars, {
+          autoAlpha: 0,
+          yPercent: 150 * dFactor
         }, {
-            autoAlpha: 1,
-            yPercent: 0,
-            duration: 1,
-            ease: 'power2',
-            stagger: {
-              each: 0.02,
-              from: 'random'
-            }
+          autoAlpha: 1,
+          yPercent: 0,
+          duration: 1,
+          ease: 'power2',
+          stagger: {
+            each: 0.02,
+            from: 'random'
+          }
         }, 0.2)
       } else {
-          let content = sections[index].querySelector(`.${s.slideContent}`)
-          if (content) {
-             tl.fromTo(content, { autoAlpha: 0, y: 50 * dFactor }, { autoAlpha: 1, y: 0, duration: 1 }, 0.2)
-          }
+        let content = sections[index].querySelector(`.${s.slideContent}`)
+        if (content) {
+          tl.fromTo(content, { autoAlpha: 0, y: 50 * dFactor }, { autoAlpha: 1, y: 0, duration: 1 }, 0.2)
+        }
       }
 
       currentIndex = index
@@ -386,7 +386,7 @@ export default function LandingPage() {
           <div className={s.gsapInner}>
             <div className={s.gsapBg} style={{ backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%), url("${trans3d}")` }}>
               <div className={s.slideContent} style={{ justifyContent: 'space-between' }}>
-                
+
                 <div style={{ marginTop: 'auto', padding: '0 2rem' }}>
                   <div className={s.statsGrid} style={{ maxWidth: '1100px', margin: '0 auto 4rem', position: 'relative', zIndex: 10 }}>
                     {STATS.map(({ value, label }) => (
@@ -396,7 +396,7 @@ export default function LandingPage() {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className={s.ctaBannerContent} style={{ textAlign: 'center', marginBottom: '6rem' }}>
                     <h2 className={s.ctaBannerTitle} style={{ color: 'white', fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
                       <SplitText text="Ready to Transform?" />
