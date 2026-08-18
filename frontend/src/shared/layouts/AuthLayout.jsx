@@ -1,23 +1,26 @@
-import logoImage from '@/assets/images/logo.png'
+import { VantaBackground } from '@/shared/components/VantaBackground'
+import { motion, AnimatePresence } from 'motion/react'
+import { useLocation } from 'react-router-dom'
 
 export function AuthLayout({ children }) {
+  const location = useLocation()
+
   return (
-    <div className="flex min-h-svh w-full">
-      {/* Brand Panel - Hidden on mobile, visible on large screens */}
-      <div className="relative hidden lg:block lg:w-1/2 bg-slate-900">
-        <img 
-          src={logoImage} 
-          alt="Brand Background" 
-          className="absolute inset-0 h-full w-full object-cover" 
-        />
+    <VantaBackground>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10 min-h-svh w-full">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 0.95 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} // smooth ease-out
+            className="w-full max-w-[420px] relative z-10"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </div>
-      
-      {/* Form Panel */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-muted p-6 md:p-10">
-        <div className="w-full max-w-[380px]">
-          {children}
-        </div>
-      </div>
-    </div>
+    </VantaBackground>
   )
 }

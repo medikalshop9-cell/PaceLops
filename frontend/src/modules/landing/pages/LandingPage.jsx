@@ -1,28 +1,21 @@
-import { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import gsap from 'gsap'
+import { Observer } from 'gsap/Observer'
 import {
-  Zap,
-  Shield,
-  Clock,
-  Search,
-  Package,
-  Truck,
-  BarChart3,
-  CheckCircle2,
-  ArrowRight,
-  Menu,
-  X,
-  Bell,
-  Globe,
+  Zap, Shield, Clock, Search, Package, Truck, BarChart3,
+  CheckCircle2, ArrowRight, Menu, X, Bell, Globe
 } from 'lucide-react'
 
 import s from '../styles/landing.module.css'
 import logoMark from '@/assets/images/parcelops_logo_mark.png'
 import heroBg from '@/assets/images/hero secion.png'
+import truckVis from '@/assets/images/truck visualisation.png'
+import displayImg from '@/assets/images/display.png'
+import _3dVis from '@/assets/images/3D visualisation.png'
+import trans3d from '@/assets/images/Transparent 3D.png'
 
-/* ─────────────────────────────────────────────────────────────────
-   ParceLops — Landing Page (Premium)
-───────────────────────────────────────────────────────────────── */
+gsap.registerPlugin(Observer)
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
@@ -91,26 +84,125 @@ const STATS = [
 
 const FOOTER_LINKS = ['Terms of Service', 'Privacy Policy', 'Contact Support', 'Help Centre']
 
-// ─────────────────────────────────────────────────────────────────
+// Custom SplitText Component
+const SplitText = ({ text }) => {
+  return (
+    <span style={{ display: 'inline-block' }}>
+      {text.split(' ').map((word, wordIndex) => (
+        <span key={wordIndex} className={s.clipText} style={{ display: 'inline-block', whiteSpace: 'pre' }}>
+          {word.split('').map((char, charIndex) => (
+            <span key={charIndex} className={`${s.char} split-char`} style={{ display: 'inline-block' }}>
+              {char}
+            </span>
+          ))}
+          {wordIndex !== text.split(' ').length - 1 && ' '}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [trackingId, setTrackingId] = useState('')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const navigate = useNavigate()
+  
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    let sections = document.querySelectorAll(`.${s.gsapSection}`)
+    let images = document.querySelectorAll(`.${s.gsapBg}`)
+    let outerWrappers = gsap.utils.toArray(`.${s.gsapOuter}`)
+    let innerWrappers = gsap.utils.toArray(`.${s.gsapInner}`)
+    
+    let currentIndex = -1
+    let wrap = gsap.utils.wrap(0, sections.length)
+    let animating = false
+
+    gsap.set(outerWrappers, { yPercent: 100 })
+    gsap.set(innerWrappers, { yPercent: -100 })
+
+    function gotoSection(index, direction) {
+      index = wrap(index)
+      animating = true
+      let fromTop = direction === -1
+      let dFactor = fromTop ? -1 : 1
+      let tl = gsap.timeline({
+        defaults: { duration: 1.25, ease: 'power1.inOut' },
+        onComplete: () => { animating = false }
+      })
+      
+      if (currentIndex >= 0) {
+        gsap.set(sections[currentIndex], { zIndex: 0 })
+        tl.to(images[currentIndex], { yPercent: -15 * dFactor })
+          .set(sections[currentIndex], { autoAlpha: 0 })
+      }
+      
+      gsap.set(sections[index], { autoAlpha: 1, zIndex: 1 })
+      
+      let currentChars = sections[index].querySelectorAll('.split-char')
+      
+      tl.fromTo([outerWrappers[index], innerWrappers[index]], { 
+          yPercent: i => i ? -100 * dFactor : 100 * dFactor
+        }, { 
+          yPercent: 0 
+        }, 0)
+        .fromTo(images[index], { yPercent: 15 * dFactor }, { yPercent: 0 }, 0)
+        
+      if (currentChars.length > 0) {
+        tl.fromTo(currentChars, { 
+            autoAlpha: 0, 
+            yPercent: 150 * dFactor
+        }, {
+            autoAlpha: 1,
+            yPercent: 0,
+            duration: 1,
+            ease: 'power2',
+            stagger: {
+              each: 0.02,
+              from: 'random'
+            }
+        }, 0.2)
+      } else {
+          let content = sections[index].querySelector(`.${s.slideContent}`)
+          if (content) {
+             tl.fromTo(content, { autoAlpha: 0, y: 50 * dFactor }, { autoAlpha: 1, y: 0, duration: 1 }, 0.2)
+          }
+      }
+
+      currentIndex = index
+    }
+
+    let observer = Observer.create({
+      target: containerRef.current,
+      type: 'wheel,touch,pointer',
+      wheelSpeed: -1,
+      onDown: () => !animating && gotoSection(currentIndex - 1, -1),
+      onUp: () => !animating && gotoSection(currentIndex + 1, 1),
+      tolerance: 10,
+      preventDefault: true
+    })
+
+    gotoSection(0, 1)
+
+    return () => {
+      observer.kill()
+    }
+  }, [])
 
   const handleTransition = (path) => {
     setIsTransitioning(true)
     setTimeout(() => {
       navigate(path)
-    }, 1500) // Duration of the truck animation
+    }, 1500)
   }
 
   return (
-    <div className={s.page}>
+    <div className={s.pageGsap} ref={containerRef}>
 
-      {/* ══ NAV ══════════════════════════════════════════════════ */}
-      <header className={s.nav}>
+      {/* ══ NAV (Fixed on top) ════════════════════════════════════════ */}
+      <header className={s.nav} style={{ position: 'fixed', width: '100%', zIndex: 50 }}>
         <div className={s.navInner}>
           <Link to="/" className={s.logo}>
             <span className={s.logoWordmark}>ParceLops</span>
@@ -153,185 +245,192 @@ export default function LandingPage() {
         )}
       </header>
 
-      <main style={{ flexGrow: 1 }}>
-
-        {/* ══ HERO — full-width background image ══════════════════ */}
-        <section className={s.hero} style={{ backgroundImage: `url(${heroBg})` }}>
-          <div className={s.heroOverlay} />
-          <div className={s.heroContent}>
-            <div className={s.heroBadge}>
-              <span className={s.badgeDot} />
-              <span>Next-Gen Logistics Platform</span>
-            </div>
-
-            <h1 className={s.heroTitle}>
-              Smart Parcel{' '}
-              <span className={s.heroTitleAccent}>Delivery</span>{' '}
-              &amp;&nbsp;Management
-            </h1>
-
-            <p className={s.heroSub}>
-              Track, manage, and deliver with unparalleled precision.
-              The next generation of logistics intelligence built for modern operations.
-            </p>
-
-            <div className={s.heroCtas}>
-              <button onClick={() => handleTransition('/login')} className={s.ctaPrimary}>
-                Get Started Free <ArrowRight size={17} />
-              </button>
-              <a href="#how-it-works" className={s.ctaSecondary}>
-                See How It Works
-              </a>
-            </div>
-
-            <div className={s.heroPills}>
-              {[
-                { icon: <Zap size={16} />, label: 'Lightning Fast', color: '#fe6b00' },
-                { icon: <Shield size={16} />, label: 'Bank-grade Security', color: '#002d62' },
-                { icon: <Clock size={16} />, label: 'Real-time Sync', color: '#31a69a' },
-              ].map(({ icon, label, color }) => (
-                <div key={label} className={s.pill}>
-                  <span className={s.pillIcon} style={{ color }}>{icon}</span>
-                  <span className={s.pillText}>{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══ TRACK ═══════════════════════════════════════════════ */}
-        <section className={s.trackSection}>
-          <div className={s.trackCard}>
-            <h2 className={s.trackTitle}>Track a Parcel</h2>
-            <p className={s.trackSub}>Enter your tracking ID for real-time delivery status</p>
-            <div className={s.trackRow}>
-              <div className={s.trackInputWrap}>
-                <Search size={18} className={s.trackIcon} />
-                <input
-                  type="text"
-                  value={trackingId}
-                  onChange={e => setTrackingId(e.target.value)}
-                  placeholder="Enter your 16-digit Tracking ID…"
-                  className={s.trackInput}
-                />
-              </div>
-              <button className={s.trackBtn}>
-                <Truck size={17} />
-                Track Now
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ FEATURES ════════════════════════════════════════════ */}
-        <section id="features" className={s.section}>
-          <div className={s.container}>
-            <div className={s.sectionHeader}>
-              <span className={s.eyebrow}>Features</span>
-              <h2 className={s.sectionTitle}>Everything You Need to Deliver Excellence</h2>
-              <p className={s.sectionSub}>
-                A complete suite of tools to manage your entire delivery operation — from first mile to last.
-              </p>
-            </div>
-
-            <div className={s.carouselTrack}>
-              <div className={s.carouselInner}>
-                {[...FEATURES, ...FEATURES].map(({ icon, color, bg, title, desc }, i) => (
-                  <div key={i} className={s.featureCard}>
-                    <div className={s.featureIconWrap} style={{ background: bg, color }}>
-                      {icon}
-                    </div>
-                    <h3 className={s.featureTitle}>{title}</h3>
-                    <p className={s.featureDesc}>{desc}</p>
+      {/* ══ SLIDE 1: HERO ════════════════════════════════════════ */}
+      <section className={s.gsapSection}>
+        <div className={s.gsapOuter}>
+          <div className={s.gsapInner}>
+            <div className={s.gsapBg} style={{ backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.4) 100%), url("${heroBg}")` }}>
+              <div className={s.slideContent}>
+                <div className={s.heroContent} style={{ margin: '0 auto', textAlign: 'center', maxWidth: '800px', padding: '0 2rem' }}>
+                  <div className={s.heroBadge} style={{ display: 'inline-flex', marginBottom: '2rem' }}>
+                    <span className={s.badgeDot} />
+                    <span>Next-Gen Logistics Platform</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ HOW IT WORKS ════════════════════════════════════════ */}
-        <section id="how-it-works" className={s.howItWorks}>
-          <div className={s.container}>
-            <div className={s.sectionHeader}>
-              <span className={s.eyebrowDark}>How It Works</span>
-              <h2 className={s.howTitle}>Operational in Minutes</h2>
-              <p className={s.howSub}>
-                From onboarding to first delivery in three simple steps.
-              </p>
-            </div>
-
-            <div className={s.stepsRow}>
-              {STEPS.map(({ num, color, title, desc }, i) => (
-                <div key={num} className={s.stepCard}>
-                  <div className={s.stepNum} style={{ background: color }}>
-                    {num}
+                  <h1 className={s.heroTitle} style={{ color: 'white', marginBottom: '2rem' }}>
+                    <SplitText text="Smart Parcel Delivery & Management" />
+                  </h1>
+                  <p className={s.heroSub} style={{ color: '#eee', marginBottom: '3rem' }}>
+                    Track, manage, and deliver with unparalleled precision.
+                    The next generation of logistics intelligence built for modern operations.
+                  </p>
+                  <div className={s.heroCtas} style={{ justifyContent: 'center' }}>
+                    <button onClick={() => handleTransition('/login')} className={s.ctaPrimary}>
+                      Get Started Free <ArrowRight size={17} />
+                    </button>
                   </div>
-                  <h3 className={s.stepTitle}>{title}</h3>
-                  <p className={s.stepDesc}>{desc}</p>
-                  {i < STEPS.length - 1 && (
-                    <div className={s.stepConnector}>
-                      <ArrowRight size={20} />
-                    </div>
-                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══ STATS ═══════════════════════════════════════════════ */}
-        <section className={s.statsStrip}>
-          <div className={s.statsGrid}>
-            {STATS.map(({ value, label }) => (
-              <div key={label} className={s.statItem}>
-                <div className={s.statValue}>{value}</div>
-                <div className={s.statLabel}>{label}</div>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ══ CTA BANNER ══════════════════════════════════════════ */}
-        <section className={s.ctaBanner}>
-          <div className={s.ctaBannerContent}>
-            <h2 className={s.ctaBannerTitle}>
-              Ready to Transform Your Delivery Operations?
-            </h2>
-            <p className={s.ctaBannerSub}>
-              Join hundreds of businesses delivering smarter, faster, and more reliably with ParceLops.
-            </p>
-            <div className={s.ctaBannerActions}>
-              <button onClick={() => handleTransition('/login')} className={s.ctaBannerPrimary}>
-                Start For Free <ArrowRight size={17} />
-              </button>
-              <a href="#features" className={s.ctaBannerSecondary}>
-                <CheckCircle2 size={17} />
-                Explore Features
-              </a>
             </div>
           </div>
-        </section>
-
-      </main>
-
-      {/* ══ FOOTER ══════════════════════════════════════════════ */}
-      <footer className={s.footer}>
-        <div className={s.footerInner}>
-          <div className={s.footerBrand}>
-            <div className={s.footerLogoRow}>
-              <img src={logoMark} alt="ParceLops" className={s.footerLogoImg} />
-              <span className={s.footerBrandName}>ParceLops</span>
-            </div>
-            <span className={s.footerCopy}>© 2025 ParceLops Logistics. All rights reserved.</span>
-          </div>
-          <ul className={s.footerNav}>
-            {FOOTER_LINKS.map(link => (
-              <li key={link}><a href="#" className={s.footerLink}>{link}</a></li>
-            ))}
-          </ul>
         </div>
-      </footer>
+      </section>
+
+      {/* ══ SLIDE 2: TRACK PARCEL ════════════════════════════════════════ */}
+      <section className={s.gsapSection}>
+        <div className={s.gsapOuter}>
+          <div className={s.gsapInner}>
+            <div className={s.gsapBg} style={{ backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.4) 100%), url("${truckVis}")` }}>
+              <div className={s.slideContent}>
+                <div className={s.trackSection} style={{ margin: '0 auto', width: '100%' }}>
+                  <h2 className={s.trackTitle} style={{ color: 'white', marginBottom: '30px', textAlign: 'center', fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+                    <SplitText text="Track a Parcel" />
+                  </h2>
+                  <div className={s.trackCard}>
+                    <p className={s.trackSub}>Enter your tracking ID for real-time delivery status</p>
+                    <div className={s.trackRow}>
+                      <div className={s.trackInputWrap}>
+                        <Search size={18} className={s.trackIcon} />
+                        <input
+                          type="text"
+                          value={trackingId}
+                          onChange={e => setTrackingId(e.target.value)}
+                          placeholder="Enter your 16-digit Tracking ID…"
+                          className={s.trackInput}
+                        />
+                      </div>
+                      <button className={s.trackBtn}>
+                        <Truck size={17} />
+                        Track Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SLIDE 3: FEATURES ════════════════════════════════════════ */}
+      <section className={s.gsapSection}>
+        <div className={s.gsapOuter}>
+          <div className={s.gsapInner}>
+            <div className={s.gsapBg} style={{ backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%), url("${displayImg}")` }}>
+              <div className={s.slideContent}>
+                <div className={s.container}>
+                  <div className={s.sectionHeader}>
+                    <span className={s.eyebrow}>Features</span>
+                    <h2 className={s.sectionTitle} style={{ color: 'white', fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+                      <SplitText text="Deliver Excellence" />
+                    </h2>
+                  </div>
+                  <div className={s.carouselTrack}>
+                    <div className={s.carouselInner}>
+                      {[...FEATURES, ...FEATURES].map(({ icon, color, bg, title, desc }, i) => (
+                        <div key={i} className={s.featureCard} style={{ background: 'rgba(255,255,255,0.95)' }}>
+                          <div className={s.featureIconWrap} style={{ background: bg, color }}>
+                            {icon}
+                          </div>
+                          <h3 className={s.featureTitle} style={{ color: 'var(--navy-deep)' }}>{title}</h3>
+                          <p className={s.featureDesc}>{desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SLIDE 4: HOW IT WORKS ════════════════════════════════════════ */}
+      <section className={s.gsapSection}>
+        <div className={s.gsapOuter}>
+          <div className={s.gsapInner}>
+            <div className={s.gsapBg} style={{ backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%), url("${_3dVis}")` }}>
+              <div className={s.slideContent}>
+                <div className={s.container}>
+                  <div className={s.sectionHeader}>
+                    <span className={s.eyebrowDark}>How It Works</span>
+                    <h2 className={s.howTitle} style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+                      <SplitText text="Operational in Minutes" />
+                    </h2>
+                  </div>
+                  <div className={s.stepsRow}>
+                    {STEPS.map(({ num, color, title, desc }, i) => (
+                      <div key={num} className={s.stepCard} style={{ background: 'rgba(0,0,0,0.6)' }}>
+                        <div className={s.stepNum} style={{ background: color }}>
+                          {num}
+                        </div>
+                        <h3 className={s.stepTitle}>{title}</h3>
+                        <p className={s.stepDesc}>{desc}</p>
+                        {i < STEPS.length - 1 && (
+                          <div className={s.stepConnector}>
+                            <ArrowRight size={20} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SLIDE 5: CTA / FOOTER ════════════════════════════════════════ */}
+      <section className={s.gsapSection}>
+        <div className={s.gsapOuter}>
+          <div className={s.gsapInner}>
+            <div className={s.gsapBg} style={{ backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%), url("${trans3d}")` }}>
+              <div className={s.slideContent} style={{ justifyContent: 'space-between' }}>
+                
+                <div style={{ marginTop: 'auto', padding: '0 2rem' }}>
+                  <div className={s.statsGrid} style={{ maxWidth: '1100px', margin: '0 auto 4rem', position: 'relative', zIndex: 10 }}>
+                    {STATS.map(({ value, label }) => (
+                      <div key={label} className={s.statItem}>
+                        <div className={s.statValue}>{value}</div>
+                        <div className={s.statLabel}>{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className={s.ctaBannerContent} style={{ textAlign: 'center', marginBottom: '6rem' }}>
+                    <h2 className={s.ctaBannerTitle} style={{ color: 'white', fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+                      <SplitText text="Ready to Transform?" />
+                    </h2>
+                    <div className={s.ctaBannerActions} style={{ marginTop: '2.5rem' }}>
+                      <button onClick={() => handleTransition('/login')} className={s.ctaBannerPrimary}>
+                        Start For Free <ArrowRight size={17} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <footer className={s.footer} style={{ background: 'rgba(0,0,0,0.5)', width: '100%', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div className={s.footerInner} style={{ padding: '2rem' }}>
+                    <div className={s.footerBrand}>
+                      <div className={s.footerLogoRow}>
+                        <img src={logoMark} alt="ParceLops" className={s.footerLogoImg} />
+                        <span className={s.footerBrandName}>ParceLops</span>
+                      </div>
+                      <span className={s.footerCopy}>© 2025 ParceLops Logistics. All rights reserved.</span>
+                    </div>
+                    <ul className={s.footerNav}>
+                      {FOOTER_LINKS.map(link => (
+                        <li key={link}><a href="#" className={s.footerLink} style={{ color: 'rgba(255,255,255,0.7)' }}>{link}</a></li>
+                      ))}
+                    </ul>
+                  </div>
+                </footer>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ══ TRANSITION OVERLAY ══════════════════════════════════════ */}
       {isTransitioning && (

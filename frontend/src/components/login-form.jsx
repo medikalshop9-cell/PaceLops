@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 import {
   Card,
   CardContent,
@@ -22,7 +23,7 @@ import { LoadingTransition } from "@/shared/components/LoadingTransition/Loading
 import { useAuthStore } from "@/store/useAuthStore";
 
 export function LoginForm({ className, onSignupClick, ...props }) {
-  const [step, setStep] = useState("login"); // 'login' | 'otp-email'
+  const [step, setStep] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otpEmail, setOtpEmail] = useState("");
@@ -32,7 +33,6 @@ export function LoginForm({ className, onSignupClick, ...props }) {
   const navigate = useNavigate();
   const setUser = useAuthStore((state) => state.setUser);
 
-  // ----- Email/Password Login (API call) -----
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -63,7 +63,6 @@ export function LoginForm({ className, onSignupClick, ...props }) {
     }
   };
 
-  // ----- OTP flow -----
   const handleOtpSubmit = (e) => {
     e.preventDefault();
     if (otpEmail) {
@@ -73,38 +72,36 @@ export function LoginForm({ className, onSignupClick, ...props }) {
 
   const handleOtpClick = () => setStep("otp-email");
 
-  // ----- Social login placeholders -----
   const handleAppleLogin = () => alert("Apple login coming soon");
   const handleGoogleLogin = () => alert("Google login coming soon");
 
-  // Determine form submission handler based on step
   const onSubmit = step === "login" ? handleLogin : handleOtpSubmit;
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] border-border/40 border">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2.5 pb-2">
-            <img src={logoMark} alt="ParcelOps" className="w-7 h-7 object-contain" />
-            <span className="text-xl font-semibold tracking-tight text-foreground">ParcelOps</span>
+      <Card className="bg-slate-950/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] text-slate-100 overflow-hidden">
+        <CardHeader className="text-center relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+          <div className="flex items-center justify-center gap-2.5 pb-2 relative z-10">
+            <img src={logoMark} alt="ParcelOps" className="w-7 h-7 object-contain drop-shadow-md" />
+            <span className="text-xl font-semibold tracking-tight text-white">ParcelOps</span>
           </div>
-          <CardTitle className="text-[20px] font-medium">Welcome back</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-[20px] font-medium text-white relative z-10">Welcome back</CardTitle>
+          <CardDescription className="text-slate-300 relative z-10">
             {step === "login"
               ? "Login with your email and password, or use one of the options below."
               : "Enter your email to receive a login code"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <form onSubmit={onSubmit}>
             {step === "login" ? (
               <FieldGroup>
-                {/* Social login buttons */}
                 <Field>
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full bg-background hover:bg-accent text-foreground"
+                    className="h-10 w-full bg-white/5 border-white/10 hover:bg-white/10 text-white transition-all"
                     onClick={handleAppleLogin}
                   >
                     <svg
@@ -122,7 +119,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full mt-2 bg-background hover:bg-accent text-foreground"
+                    className="h-10 w-full mt-2 bg-white/5 border-white/10 hover:bg-white/10 text-white transition-all"
                     onClick={handleGoogleLogin}
                   >
                     <svg
@@ -140,7 +137,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                   <Button
                     variant="outline"
                     type="button"
-                    className="h-10 w-full mt-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary"
+                    className="h-10 w-full mt-2 border-[#fe6b00]/30 hover:border-[#fe6b00]/60 hover:bg-[#fe6b00]/10 text-[#fe6b00] transition-all"
                     onClick={handleOtpClick}
                   >
                     <svg
@@ -162,19 +159,18 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                   </Button>
                 </Field>
 
-                <FieldSeparator className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground *:data-[slot=field-separator-content]:bg-card">
+                <FieldSeparator className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 *:data-[slot=field-separator-content]:bg-transparent">
                   OR CONTINUE WITH
                 </FieldSeparator>
 
-                {/* Email & Password */}
                 <Field>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldLabel htmlFor="email" className="text-slate-200">Email</FieldLabel>
                   <Input
                     id="email"
                     type="email"
                     placeholder="m@example.com"
                     required
-                    className="h-10"
+                    className="h-10 bg-black/20 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#fe6b00]"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -182,10 +178,10 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                 </Field>
                 <Field>
                   <div className="flex items-center">
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password" className="text-slate-200">Password</FieldLabel>
                     <a
                       href="#"
-                      className="ml-auto text-sm text-primary underline-offset-4 hover:underline"
+                      className="ml-auto text-sm text-[#fe6b00] underline-offset-4 hover:underline"
                     >
                       Forgot your password?
                     </a>
@@ -194,7 +190,7 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                     id="password"
                     type="password"
                     required
-                    className="h-10"
+                    className="h-10 bg-black/20 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#fe6b00]"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
@@ -202,25 +198,27 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                 </Field>
 
                 {error && (
-                  <div className="text-sm text-red-600 text-center -mt-2">
+                  <div className="text-sm text-red-400 text-center -mt-2">
                     {error}
                   </div>
                 )}
 
                 <Field>
-                  <Button
-                    type="submit"
-                    className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors font-semibold"
-                    disabled={loading}
-                  >
-                    {loading ? "Logging in..." : "Login"}
-                  </Button>
-                  <FieldDescription className="text-center pt-2">
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      type="submit"
+                      className="h-10 w-full bg-gradient-to-r from-[#fe6b00] to-[#e05a00] text-white hover:opacity-90 shadow-[0_4px_14px_rgba(254,107,0,0.4)] border-none transition-all font-bold"
+                      disabled={loading}
+                    >
+                      {loading ? "Logging in..." : "Login"}
+                    </Button>
+                  </motion.div>
+                  <FieldDescription className="text-center pt-2 text-slate-300">
                     Don&apos;t have an account?{" "}
                     <button
                       type="button"
                       onClick={onSignupClick}
-                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors"
+                      className="font-medium text-white hover:text-[#fe6b00] hover:underline transition-colors"
                     >
                       Sign up
                     </button>
@@ -228,32 +226,33 @@ export function LoginForm({ className, onSignupClick, ...props }) {
                 </Field>
               </FieldGroup>
             ) : (
-              // OTP step
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="otpEmail">Email Address</FieldLabel>
+                  <FieldLabel htmlFor="otpEmail" className="text-slate-200">Email Address</FieldLabel>
                   <Input
                     id="otpEmail"
                     type="email"
                     placeholder="m@example.com"
                     required
-                    className="h-10"
+                    className="h-10 bg-black/20 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#fe6b00]"
                     value={otpEmail}
                     onChange={(e) => setOtpEmail(e.target.value)}
                     autoFocus
                   />
                 </Field>
                 <Field className="pt-2">
-                  <Button
-                    type="submit"
-                    className="h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors font-semibold"
-                  >
-                    Send Code
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      type="submit"
+                      className="h-10 w-full bg-gradient-to-r from-[#fe6b00] to-[#e05a00] text-white hover:opacity-90 shadow-[0_4px_14px_rgba(254,107,0,0.4)] border-none transition-all font-bold"
+                    >
+                      Send Code
+                    </Button>
+                  </motion.div>
                   <Button
                     variant="ghost"
                     type="button"
-                    className="h-10 w-full mt-2"
+                    className="h-10 w-full mt-2 text-slate-300 hover:text-white hover:bg-white/10"
                     onClick={() => setStep("login")}
                   >
                     Back to Login
@@ -264,13 +263,13 @@ export function LoginForm({ className, onSignupClick, ...props }) {
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center text-xs text-muted-foreground/80">
+      <FieldDescription className="px-6 text-center text-xs text-slate-400">
         By clicking continue, you agree to our{" "}
-        <a href="#" className="underline hover:text-foreground">
+        <a href="#" className="underline hover:text-white transition-colors">
           Terms of Service
         </a>{" "}
         and{" "}
-        <a href="#" className="underline hover:text-foreground">
+        <a href="#" className="underline hover:text-white transition-colors">
           Privacy Policy
         </a>.
       </FieldDescription>

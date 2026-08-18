@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
+import { Joyride, STATUS } from 'react-joyride'
 import { PackagePlus, MapPin, CalendarDays, Truck, CheckCircle2, ArrowRight, MoreVertical, AlertCircle, RefreshCw, Box, Activity, CreditCard } from 'lucide-react'
 import truckViz from '@/assets/images/Transparent 3D.png'
 import { dashboardService } from '../services/dashboard.service'
@@ -25,6 +26,40 @@ export default function CustomerDashboard() {
   const [error, setError] = useState(null)
   const [activePopup, setActivePopup] = useState(null)
 
+  // Joyride Tour State
+  const [runTour, setRunTour] = useState(false)
+  const [tourSteps] = useState(() => {
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+    return [
+      {
+        target: isDesktop ? '.tour-desktop-sidebar' : '.tour-mobile-menu',
+        content: 'Navigate through your operations, finances, and account settings using the sidebar menu.',
+        placement: isDesktop ? 'right' : 'bottom',
+        disableBeacon: true,
+      },
+      {
+        target: '.tour-hero-stats',
+        content: 'Here\'s your command center. Keep track of all your parcels and deliveries at a glance.',
+        placement: 'bottom',
+      },
+      {
+        target: '.tour-quick-actions',
+        content: 'Need to send something? Create a new shipment, track an existing one, or schedule a pickup in one click.',
+        placement: 'bottom',
+      },
+      {
+        target: '.tour-live-map',
+        content: 'Watch your active deliveries move in real-time across the country.',
+        placement: 'top',
+      },
+      {
+        target: '.tour-recent-activity',
+        content: 'Your timeline shows all recent status changes and payments so you never miss a beat.',
+        placement: 'top',
+      }
+    ];
+  })
+
   const fetchDashboardData = async () => {
     if (!user?.id) return;
     
@@ -46,7 +81,25 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     fetchDashboardData()
+
+    // Check if user has seen the tour
+    const hasSeenTour = localStorage.getItem('parcelops_dashboard_tour_seen')
+    if (!hasSeenTour) {
+      // Mark as seen immediately so it never shows again, even if they refresh midway
+      localStorage.setItem('parcelops_dashboard_tour_seen', 'true');
+      // Delay tour start slightly so data can load and UI settles
+      setTimeout(() => setRunTour(true), 1000)
+    }
   }, [])
+
+  const handleJoyrideCallback = (data) => {
+    const { status, action } = data;
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+    
+    if (finishedStatuses.includes(status) || action === 'close') {
+      setRunTour(false);
+    }
+  };
 
   // Helper to get activity icon
   const getActivityIcon = (type) => {
@@ -62,9 +115,45 @@ export default function CustomerDashboard() {
 
   return (
     <div className="py-8 space-y-10 pb-24">
-      {/* Hero Card */}
-      <div className="relative overflow-hidden rounded-[32px] bg-card py-4 px-6 md:py-4 md:px-10 border border-border shadow-sm dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+      {/* Joyride Tour Component */}
+      <Joyride
+        steps={tourSteps}
+        run={runTour}
+        continuous={true}
+        showProgress={true}
+        showSkipButton={true}
+        callback={handleJoyrideCallback}
+        styles={{
+          options: {
+            arrowColor: '#fff',
+            backgroundColor: '#fff',
+            overlayColor: 'rgba(0, 0, 0, 0.6)',
+            primaryColor: '#fe6b00', // ParceLops orange
+            textColor: '#0f172a', // Slate 900
+            zIndex: 10000,
+          },
+          tooltipContainer: {
+            textAlign: 'left',
+          },
+          buttonNext: {
+            backgroundColor: '#fe6b00',
+            borderRadius: '9999px',
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: '600',
+          },
+          buttonBack: {
+            color: '#64748b',
+            marginRight: '8px',
+          },
+          buttonSkip: {
+            color: '#64748b',
+          }
+        }}
+      />
 
+      {/* Hero Card */}
+      <div className="tour-hero-stats relative overflow-hidden rounded-[32px] bg-card py-4 px-6 md:py-4 md:px-10 border border-border shadow-sm dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
         {/* Subtle decorative glow */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
@@ -136,7 +225,7 @@ export default function CustomerDashboard() {
       </div>
 
       {/* Quick Action Cards */}
-      <div className="space-y-6">
+      <div className="space-y-6 tour-quick-actions">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-xl font-bold text-foreground tracking-tight">Quick Actions</h3>
         </div>
@@ -178,7 +267,7 @@ export default function CustomerDashboard() {
       </div>
 
       {/* Active Shipments Map */}
-      <div className="space-y-6">
+      <div className="space-y-6 tour-live-map">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-xl font-bold text-foreground tracking-tight">Live Shipments</h3>
         </div>
@@ -227,7 +316,7 @@ export default function CustomerDashboard() {
       </div>
 
       {/* Recent Activity Feed */}
-      <div className="space-y-6">
+      <div className="space-y-6 tour-recent-activity">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-xl font-bold text-foreground tracking-tight">Recent Activity</h3>
         </div>

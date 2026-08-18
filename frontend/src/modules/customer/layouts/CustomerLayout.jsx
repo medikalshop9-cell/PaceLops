@@ -218,7 +218,7 @@ export function CustomerLayout() {
 
       {/* Desktop Sidebar */}
       <nav className={cn(
-        "hidden lg:flex flex-col bg-card border-r border-border z-40 shrink-0 h-full transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative",
+        "hidden lg:flex flex-col bg-card border-r border-border z-40 shrink-0 h-full transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative tour-desktop-sidebar",
         isCollapsed ? "w-[96px]" : "w-[280px]"
       )}>
         <SidebarContent currentPath={currentPath} setIsMenuOpen={setIsMenuOpen} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
@@ -231,7 +231,7 @@ export function CustomerLayout() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsMenuOpen(true)}
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
+              className="tour-mobile-menu lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
