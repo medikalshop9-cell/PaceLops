@@ -801,17 +801,38 @@ function LiveMapPanel({ parcel }) {
     (originCoords[1] + destCoords[1]) / 2
   ]
 
-  // Add some slight curvature or middle points to the route
-  const midPoint = [
-    originCoords[0] + (destCoords[0] - originCoords[0]) * 0.5 - 0.2, // offset longitude to create a bow
-    originCoords[1] + (destCoords[1] - originCoords[1]) * 0.5
-  ]
+  const [routeCoordinates, setRouteCoordinates] = useState(null)
 
-  const mockRoute = [
-    originCoords,
-    midPoint,
-    destCoords
-  ]
+  useEffect(() => {
+    async function fetchRoute() {
+      try {
+        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${originCoords[0]},${originCoords[1]};${destCoords[0]},${destCoords[1]}?overview=full&geometries=geojson`)
+        const data = await res.json()
+        if (data.routes && data.routes[0] && data.routes[0].geometry) {
+          setRouteCoordinates(data.routes[0].geometry.coordinates)
+        } else {
+          setRouteCoordinates([
+            originCoords,
+            [
+              originCoords[0] + (destCoords[0] - originCoords[0]) * 0.5 - 0.2,
+              originCoords[1] + (destCoords[1] - originCoords[1]) * 0.5
+            ],
+            destCoords
+          ])
+        }
+      } catch (err) {
+        setRouteCoordinates([
+          originCoords,
+          [
+            originCoords[0] + (destCoords[0] - originCoords[0]) * 0.5 - 0.2,
+            originCoords[1] + (destCoords[1] - originCoords[1]) * 0.5
+          ],
+          destCoords
+        ])
+      }
+    }
+    fetchRoute()
+  }, [originCoords[0], originCoords[1], destCoords[0], destCoords[1]])
 
   return (
     <div className="relative overflow-hidden bg-card border border-border rounded-[24px] shadow-[var(--card-shadow)] h-[450px] mt-4 animate-scale-up group">
@@ -843,13 +864,15 @@ function LiveMapPanel({ parcel }) {
         </MapMarker>
 
         {/* Route Line */}
-        <MapRoute
-          coordinates={mockRoute}
-          color="#3b82f6"
-          width={4}
-          opacity={0.5}
-          dashArray={[2, 2]}
-        />
+        {routeCoordinates && (
+          <MapRoute
+            coordinates={routeCoordinates}
+            color="#3b82f6"
+            width={4}
+            opacity={0.5}
+            dashArray={[2, 2]}
+          />
+        )}
 
         {/* Current Location (Truck) */}
         {!isComplete && parcel.status !== 'pending' && (

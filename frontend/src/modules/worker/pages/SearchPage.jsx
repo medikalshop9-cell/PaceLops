@@ -6,9 +6,11 @@ import {
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useWorkerStore } from '../store/useWorkerStore'
+import { useThemeStore } from '../store/useThemeStore'
 
 export default function SearchPage() {
   const { parcels, updateParcelStatus, activeBranch } = useWorkerStore()
+  const { isDark } = useThemeStore()
   const [query, setQuery] = useState('')
   const [selectedParcel, setSelectedParcel] = useState(null)
   
@@ -150,25 +152,35 @@ export default function SearchPage() {
     setTimeout(() => setCopiedId(false), 1500)
   }
 
+  // ─── THEME CONSTANTS ───
+  const cardBase = isDark
+    ? 'bg-[#111827] border-slate-800/60 shadow-none'
+    : 'bg-white border-slate-200/80 shadow-xs'
+
+  const textPrimary = isDark ? 'text-white' : 'text-slate-900'
+  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-500'
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto text-slate-800 font-sans">
+    <div className={`space-y-6 max-w-5xl mx-auto font-sans ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
       
       {/* Hidden container for file decoding */}
       <div id="file-reader-hidden" className="hidden" />
 
       {/* ─── Page Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-2xl border ${cardBase}`}>
         <div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <ScanLine className="w-5 h-5 text-indigo-600" />
+          <h1 className={`text-xl font-black tracking-tight flex items-center gap-2 ${textPrimary}`}>
+            <ScanLine className="w-5 h-5 text-emerald-500" />
             Live QR & Barcode Scanner
           </h1>
-          <p className="text-xs text-slate-500 font-medium">Scan QR code using camera, upload image file, or use manual entry.</p>
+          <p className={`text-xs font-medium ${textSecondary}`}>Scan QR code using camera, upload image file, or use manual entry.</p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-            Hub Location: <strong className="text-indigo-600">{activeBranch}</strong>
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-xl border ${
+            isDark ? 'bg-slate-800/50 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-200'
+          }`}>
+            Hub Location: <strong className="text-emerald-500">{activeBranch}</strong>
           </span>
         </div>
       </div>
@@ -177,27 +189,29 @@ export default function SearchPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         
         {/* Real Live Camera Scanner Box (6 Cols) */}
-        <div className="md:col-span-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-              <Camera className="w-4 h-4 text-indigo-600" />
+        <div className={`md:col-span-6 p-5 rounded-2xl border flex flex-col justify-between space-y-4 ${cardBase}`}>
+          <div className={`flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
+            <h2 className={`text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 ${textPrimary}`}>
+              <Camera className="w-4 h-4 text-emerald-500" />
               Camera QR Code Reader
             </h2>
 
             {isCameraActive ? (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                 Live Camera Feed
               </span>
             ) : (
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                isDark ? 'text-slate-500 bg-slate-800' : 'text-slate-400 bg-slate-100'
+              }`}>
                 Camera Idle
               </span>
             )}
           </div>
 
           {/* Camera Viewfinder Box */}
-          <div className="relative bg-slate-900 rounded-xl overflow-hidden min-h-[240px] flex flex-col items-center justify-center text-center border border-slate-800">
+          <div className="relative bg-[#0a0f1a] rounded-xl overflow-hidden min-h-[240px] flex flex-col items-center justify-center text-center border border-slate-800/60">
             
             {/* Real HTML5 Camera Viewport */}
             <div id="camera-reader" className={`w-full h-full ${isCameraActive ? 'block' : 'hidden'}`} />
@@ -206,13 +220,13 @@ export default function SearchPage() {
             {!isCameraActive && (
               <div className="p-6 space-y-3 flex flex-col items-center">
                 <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-indigo-400" />
+                  <Camera className="w-8 h-8 text-emerald-500/70" />
                 </div>
-                <p className="text-xs text-slate-300 font-medium">Press below to enable webcam or mobile camera</p>
+                <p className="text-xs text-slate-400 font-medium">Press below to enable webcam or mobile camera</p>
                 
                 <button
                   onClick={() => setIsCameraActive(true)}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2 shadow-emerald-900/20"
                 >
                   <Camera className="w-4 h-4" />
                   Start Live Camera Scanner
@@ -234,17 +248,19 @@ export default function SearchPage() {
 
           {/* Error Message */}
           {cameraError && (
-            <div className="p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-[11px] font-medium flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+            <div className="p-3 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-xl text-[11px] font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{cameraError}</span>
             </div>
           )}
 
           {/* File Upload Alternative Option */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500">Scan QR from Image File:</span>
-            <label className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer transition-colors flex items-center gap-1.5">
-              <Upload className="w-3.5 h-3.5 text-slate-500" />
+          <div className={`pt-2 border-t flex items-center justify-between ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
+            <span className={`text-xs font-bold ${textSecondary}`}>Scan QR from Image File:</span>
+            <label className={`px-3.5 py-1.5 text-xs font-bold rounded-xl cursor-pointer transition-colors flex items-center gap-1.5 ${
+              isDark ? 'bg-slate-800/50 hover:bg-slate-800 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}>
+              <Upload className={`w-3.5 h-3.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
               Upload Image
               <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </label>
@@ -252,15 +268,15 @@ export default function SearchPage() {
         </div>
 
         {/* Demo QR Codes & Manual Form (6 Cols) */}
-        <div className="md:col-span-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+        <div className={`md:col-span-6 p-5 rounded-2xl border flex flex-col justify-between space-y-4 ${cardBase}`}>
           <div>
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-3 mb-3">
+            <h2 className={`text-xs font-extrabold uppercase tracking-wider border-b pb-3 mb-3 ${textPrimary} ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
               Scan Demo Parcels & Manual Input
             </h2>
 
             {/* Real QR Code Demo Cards */}
             <div className="space-y-2 mb-4">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                 Point Camera at QR Codes below to test live scan:
               </span>
               <div className="grid grid-cols-3 gap-2">
@@ -268,41 +284,47 @@ export default function SearchPage() {
                   <div
                     key={item.id}
                     onClick={() => handleScannedResult(item.tracking_number)}
-                    className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl cursor-pointer transition-all text-center flex flex-col items-center space-y-1.5 group"
+                    className={`p-2.5 border rounded-xl cursor-pointer transition-all text-center flex flex-col items-center space-y-1.5 group ${
+                      isDark ? 'bg-slate-800/30 hover:bg-emerald-500/5 border-slate-700 hover:border-emerald-500/30' : 'bg-slate-50 hover:bg-emerald-50 border-slate-200 hover:border-emerald-300'
+                    }`}
                   >
                     <div className="bg-white p-1.5 rounded-lg border border-slate-200 shadow-2xs group-hover:scale-105 transition-transform">
                       <QRCodeSVG value={item.tracking_number} size={64} />
                     </div>
-                    <span className="font-mono font-bold text-[10px] text-slate-800">{item.tracking_number}</span>
+                    <span className={`font-mono font-bold text-[10px] ${textPrimary}`}>{item.tracking_number}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Manual Form */}
-            <form onSubmit={handleSearchSubmit} className="space-y-2.5 pt-2 border-t border-slate-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Or Search Manually:</span>
+            <form onSubmit={handleSearchSubmit} className={`space-y-2.5 pt-2 border-t ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Or Search Manually:</span>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
                 <input
                   type="text"
                   placeholder="Tracking #, Load ID, or Phone..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 border ${
+                    isDark ? 'bg-slate-800/50 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                  }`}
                 />
               </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors"
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm shadow-emerald-900/20"
                 >
                   Lookup Code
                 </button>
                 <button
                   type="button"
                   onClick={() => { setQuery(''); setSelectedParcel(null); setScanMessage(null) }}
-                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl ${
+                    isDark ? 'bg-slate-800/50 hover:bg-slate-800 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
                 >
                   Clear
                 </button>
@@ -315,10 +337,10 @@ export default function SearchPage() {
             <div
               className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
                 scanMessage.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  ? isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : scanMessage.type === 'error'
-                  ? 'bg-rose-50 text-rose-700 border-rose-200'
-                  : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  ? isDark ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-rose-50 text-rose-700 border-rose-200'
+                  : isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
               }`}
             >
               <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -331,31 +353,35 @@ export default function SearchPage() {
 
       {/* ─── Scanned Parcel Action Details Card ─── */}
       {selectedParcel && (
-        <div className="bg-white p-6 rounded-2xl border-2 border-indigo-500/30 shadow-md space-y-5">
+        <div className={`p-6 rounded-2xl border-2 shadow-md space-y-5 ${
+          isDark ? 'bg-[#111827] border-emerald-500/30' : 'bg-white border-emerald-500/30'
+        }`}>
           
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
             <div className="flex items-center gap-3">
               <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
                 <QRCodeSVG value={selectedParcel.tracking_number} size={48} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-black text-lg text-slate-900">{selectedParcel.tracking_number}</span>
+                  <span className={`font-mono font-black text-lg ${textPrimary}`}>{selectedParcel.tracking_number}</span>
                   <button
                     onClick={() => handleCopy(selectedParcel.tracking_number)}
-                    className="p-1 text-slate-400 hover:text-slate-700 rounded"
+                    className={`p-1 rounded ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-700'}`}
                     title="Copy Code"
                   >
-                    {copiedId ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    {copiedId ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <span className="text-xs font-semibold text-slate-500">Ref: {selectedParcel.load_id || selectedParcel.shipment_ref}</span>
+                <span className={`text-xs font-semibold ${textSecondary}`}>Ref: {selectedParcel.load_id || selectedParcel.shipment_ref}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-400 uppercase">Current Status:</span>
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className={`text-xs font-bold uppercase ${textSecondary}`}>Current Status:</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border ${
+                isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              }`}>
                 {selectedParcel.status.replace(/_/g, ' ')}
               </span>
             </div>
@@ -363,45 +389,47 @@ export default function SearchPage() {
 
           {/* Contact Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-indigo-700 font-extrabold uppercase text-[10px]">
+            <div className={`p-4 rounded-xl border space-y-1.5 ${isDark ? 'bg-slate-800/40 border-slate-800/60' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`flex items-center gap-1.5 font-extrabold uppercase text-[10px] ${isDark ? 'text-indigo-400' : 'text-indigo-700'}`}>
                 <User className="w-3.5 h-3.5" />
                 Sender Info
               </div>
-              <div className="font-extrabold text-sm text-slate-900">{selectedParcel.sender_name}</div>
-              <div className="text-slate-600 flex items-center gap-1">
-                <Phone className="w-3 h-3 text-slate-400" />
+              <div className={`font-extrabold text-sm ${textPrimary}`}>{selectedParcel.sender_name}</div>
+              <div className={`flex items-center gap-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                <Phone className={`w-3 h-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
                 {selectedParcel.sender_phone}
               </div>
-              <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200 mt-1">
+              <div className={`text-[11px] pt-1 border-t mt-1 ${isDark ? 'text-slate-400 border-slate-700/50' : 'text-slate-500 border-slate-200'}`}>
                 {selectedParcel.sender_address}
               </div>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-blue-700 font-extrabold uppercase text-[10px]">
+            <div className={`p-4 rounded-xl border space-y-1.5 ${isDark ? 'bg-slate-800/40 border-slate-800/60' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`flex items-center gap-1.5 font-extrabold uppercase text-[10px] ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
                 <MapPin className="w-3.5 h-3.5" />
                 Receiver Info
               </div>
-              <div className="font-extrabold text-sm text-slate-900">{selectedParcel.receiver_name}</div>
-              <div className="text-slate-600 flex items-center gap-1">
-                <Phone className="w-3 h-3 text-slate-400" />
+              <div className={`font-extrabold text-sm ${textPrimary}`}>{selectedParcel.receiver_name}</div>
+              <div className={`flex items-center gap-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                <Phone className={`w-3 h-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
                 {selectedParcel.receiver_phone}
               </div>
-              <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200 mt-1">
+              <div className={`text-[11px] pt-1 border-t mt-1 ${isDark ? 'text-slate-400 border-slate-700/50' : 'text-slate-500 border-slate-200'}`}>
                 {selectedParcel.receiver_address}
               </div>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold uppercase text-[10px]">
+            <div className={`p-4 rounded-xl border space-y-1.5 ${isDark ? 'bg-slate-800/40 border-slate-800/60' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`flex items-center gap-1.5 font-extrabold uppercase text-[10px] ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
                 <Truck className="w-3.5 h-3.5" />
                 Vehicle & Driver
               </div>
-              <div className="font-extrabold text-sm text-slate-900">{selectedParcel.driver_name}</div>
-              <div className="text-slate-600">{selectedParcel.vehicle_model}</div>
-              <div className="pt-1 border-t border-slate-200 mt-1">
-                <span className="font-mono font-black text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-block">
+              <div className={`font-extrabold text-sm ${textPrimary}`}>{selectedParcel.driver_name}</div>
+              <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>{selectedParcel.vehicle_model}</div>
+              <div className={`pt-1 border-t mt-1 ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+                <span className={`font-mono font-black text-xs px-2 py-0.5 rounded border inline-block ${
+                  isDark ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                }`}>
                   Plate: {selectedParcel.vehicle_plate}
                 </span>
               </div>
@@ -409,24 +437,24 @@ export default function SearchPage() {
           </div>
 
           {/* Dispatch Triggers */}
-          <div className="border-t border-slate-100 pt-4 space-y-2">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Execute Dispatch Action:</span>
+          <div className={`border-t pt-4 space-y-2 ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider block ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>Execute Dispatch Action:</span>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => handleStatusChange('ready_for_pickup')}
-                className="px-4 py-2 bg-amber-500/10 text-amber-700 border border-amber-500/30 text-xs font-bold rounded-xl hover:bg-amber-500/20 transition-colors"
+                className="px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs font-bold rounded-xl hover:bg-amber-500/20 transition-colors"
               >
                 Mark Ready for Pickup
               </button>
               <button
                 onClick={() => handleStatusChange('in_transit')}
-                className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-xs"
+                className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-900/20"
               >
                 Dispatch Delivery Route
               </button>
               <button
                 onClick={() => handleStatusChange('delivered')}
-                className="px-4 py-2 bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 text-xs font-bold rounded-xl hover:bg-emerald-500/20 transition-colors"
+                className="px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-xl hover:bg-emerald-500/20 transition-colors"
               >
                 Mark Delivered
               </button>

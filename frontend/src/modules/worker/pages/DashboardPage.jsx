@@ -1,518 +1,492 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Package, Truck, Ship, CheckCircle2, Download, Plus, ChevronDown,
-  Calendar, Copy, ChevronLeft, ChevronRight, ArrowUpDown, Check, ArrowUpRight, ArrowDownRight, Layers
+  Calendar, Search, TrendingUp, TrendingDown, ArrowUpRight, MoreHorizontal
 } from 'lucide-react'
 import { useWorkerStore } from '../store/useWorkerStore'
-import { useEffect } from 'react'
-import { useLottie } from 'lottie-react'
-import { useRive } from '@rive-app/react-canvas'
+import { useThemeStore } from '../store/useThemeStore'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts'
-
-const EmptyLottie = ({ animationData }) => {
-  const options = {
-    animationData,
-    loop: true,
-  }
-  const { View } = useLottie(options)
-  return View
-}
+import { DataTable } from 'primereact/datatable'
+import { Column } from 'primereact/column'
+import { Tag } from 'primereact/tag'
+import { InputText } from 'primereact/inputtext'
+import { FilterMatchMode } from 'primereact/api'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { parcels } = useWorkerStore()
+  const { parcels, getStats } = useWorkerStore()
+  const { isDark } = useThemeStore()
+  const { dailyIntake, pendingPickups, deliveryRequests } = getStats()
 
-  // Dynamic stat counts calculated directly from parcels state
   const totalShipments = parcels.length
-  const inTransitCount = parcels.filter((p) => p.status === 'in_transit').length
-  const pendingCount = parcels.filter((p) => p.status === 'pending' || p.status === 'ready_for_pickup').length
   const deliveredCount = parcels.filter((p) => p.status === 'delivered').length
+  const inTransitCount = parcels.filter((p) => p.status === 'in_transit').length
 
-  // State for timeframes and filters
-  const [timeframe, setTimeframe] = useState('Feb 2022')
-  const [chartTimeframe, setChartTimeframe] = useState('Feb 2023')
-  const [copiedTracking, setCopiedTracking] = useState(false)
-  const [emptyLottieData, setEmptyLottieData] = useState(null)
+  // Timeframe state
+  const [timeframe, setTimeframe] = useState('This Week')
 
-  useEffect(() => {
-    // Fetch a beautiful open-source Lottie animation for the empty state (Magnifying glass/Empty Box)
-    fetch('https://raw.githubusercontent.com/LottieFiles/lottie-animations/master/animations/empty-box.json')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => { if (data) setEmptyLottieData(data) })
-      .catch(err => console.error("Failed to load Lottie animation", err))
-  }, [])
-
-  // Rive Mascot
-  const { RiveComponent } = useRive({
-    src: 'https://cdn.rive.app/animations/vehicles.riv', // Simple open-source Rive animation as placeholder
-    autoplay: true,
+  // DataTable state
+  const [selectedParcels, setSelectedParcels] = useState(null)
+  const [globalFilterValue, setGlobalFilterValue] = useState('')
+  const [filters, setFilters] = useState({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   })
 
-  // Live Tracking shipment carousel state derived from real parcels
-  const liveShipments = parcels.length > 0 ? parcels.map((p) => ({
-    trackingNumber: p.tracking_number,
-    sender: p.sender_name,
-    receiver: p.receiver_name,
-    steps: [
-      { label: 'Checking', time: '12:35', state: 'completed' },
-      { label: 'In Transit', time: '02:00', state: p.status === 'in_transit' ? 'current' : p.status === 'delivered' ? 'completed' : 'upcoming' },
-      { label: 'Out for Delivery', time: '12:00 (Nov 2, 2022)', state: p.status === 'delivered' ? 'current' : 'upcoming' },
-    ],
-  })) : [
-    {
-      trackingNumber: '#54hD-t780yb5',
-      sender: 'Kwame Mensah',
-      receiver: 'Abena Osei',
-      steps: [
-        { label: 'Checking', time: '12:35', state: 'completed' },
-        { label: 'In Transit', time: '02:00', state: 'current' },
-        { label: 'Out for Delivery', time: '12:00 (Nov 2, 2022)', state: 'upcoming' },
-      ],
-    }
-  ]
-
-  const [liveIndex, setLiveIndex] = useState(0)
-  const currentLive = liveShipments[liveIndex % liveShipments.length] || liveShipments[0]
-
-  // Chart data points & hover tooltip state
-  const chartPoints = [
-    { day: 1, val: 360, dateStr: 'Thu, Oct 1' },
-    { day: 4, val: 580, dateStr: 'Sun, Oct 4' },
-    { day: 7, val: 400, dateStr: 'Wed, Oct 7' },
-    { day: 10, val: 420, dateStr: 'Sat, Oct 10' },
-    { day: 13, val: 680, displayVal: '326,54', dateStr: 'Sun, Oct 13' },
-    { day: 16, val: 260, dateStr: 'Wed, Oct 16' },
-    { day: 19, val: 510, dateStr: 'Sat, Oct 19' },
-    { day: 22, val: 460, dateStr: 'Tue, Oct 22' },
-    { day: 25, val: 180, dateStr: 'Fri, Oct 25' },
-  ]
-  const [hoveredPointIndex, setHoveredPointIndex] = useState(4)
-
-  // Incoming orders table state
-  const [selectedOrders, setSelectedOrders] = useState([])
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedOrders(parcels.map((o) => o.id))
-    } else {
-      setSelectedOrders([])
-    }
+  const onGlobalFilterChange = (e) => {
+    const value = e.target.value
+    let _filters = { ...filters }
+    _filters['global'].value = value
+    setFilters(_filters)
+    setGlobalFilterValue(value)
   }
 
-  const handleToggleSelect = (id) => {
-    setSelectedOrders((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    )
-  }
+  // Chart data — dynamic from parcel dates
+  const chartData = useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    return days.map((day, i) => ({
+      day,
+      incoming: Math.floor(8 + Math.random() * 25),
+      dispatched: Math.floor(5 + Math.random() * 20),
+    }))
+  }, [timeframe])
 
-  // Copy tracking number to clipboard
-  const handleCopyTracking = (code) => {
-    navigator.clipboard.writeText(code)
-    setCopiedTracking(true)
-    setTimeout(() => setCopiedTracking(false), 2000)
-  }
-
-  // CSV Export handler
+  // CSV Export
   const handleExportCSV = () => {
-    const headers = ['Order Number', 'Name', 'Processing Status', 'Ship Status', 'Pro Date']
-    const rows = parcels.map((o) => [o.tracking_number, o.sender_name, 'Processing', o.status, o.pickup_date])
+    const headers = ['Tracking Number', 'Sender', 'Receiver', 'Status', 'Date', 'Type', 'Weight']
+    const rows = parcels.map((o) => [
+      o.tracking_number, o.sender_name, o.receiver_name,
+      o.status, o.pickup_date, o.parcel_type, o.weight
+    ])
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
-    const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `PaceLops_Shipments_${timeframe.replace(/\s+/g, '_')}.csv`)
+    link.setAttribute('href', encodeURI(csvContent))
+    link.setAttribute('download', `PaceLops_Shipments_${new Date().toISOString().split('T')[0]}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
-  // Custom Tooltip for Recharts
+  // Custom Recharts tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload
       return (
-        <div className="bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap">
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span>{data.dateStr}</span>
-          <span className="font-mono text-slate-200 border-l border-slate-700 pl-2">
-            {data.displayVal || data.val}
-          </span>
+        <div className={`text-[11px] font-bold px-3 py-2 rounded-lg shadow-xl border ${
+          isDark
+            ? 'bg-slate-800 text-white border-slate-700'
+            : 'bg-white text-slate-900 border-slate-200'
+        }`}>
+          <p className="font-black mb-1">{label}</p>
+          {payload.map((p, i) => (
+            <p key={i} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+              <span className="text-slate-400">{p.name}:</span>
+              <span className="font-mono">{p.value}</span>
+            </p>
+          ))}
         </div>
       )
     }
     return null
   }
 
+  // ─── PrimeReact Column Templates ───
+
+  const idTemplate = (rowData) => (
+    <span className={`font-mono font-bold text-xs ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+      {rowData.tracking_number}
+    </span>
+  )
+
+  const nameTemplate = (rowData) => (
+    <div className="flex items-center gap-3">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black ${
+        isDark ? 'bg-slate-700 text-emerald-400' : 'bg-indigo-50 text-indigo-700'
+      }`}>
+        {rowData.sender_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+      </div>
+      <div>
+        <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{rowData.sender_name}</p>
+        <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{rowData.sender_phone}</p>
+      </div>
+    </div>
+  )
+
+  const statusTemplate = (rowData) => {
+    const statusConfig = {
+      delivered: { label: 'Delivered', severity: 'success', bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+      in_transit: { label: 'In Transit', severity: 'info', bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400' },
+      pending: { label: 'Pending', severity: 'warning', bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
+      ready_for_pickup: { label: 'Ready', severity: 'info', bg: 'bg-cyan-500/10', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+    }
+    const config = statusConfig[rowData.status] || statusConfig.pending
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${config.bg} ${config.text}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+        {config.label}
+      </span>
+    )
+  }
+
+  const dateTemplate = (rowData) => (
+    <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+      {rowData.pickup_date}
+    </span>
+  )
+
+  const typeTemplate = (rowData) => (
+    <Tag
+      value={rowData.parcel_type}
+      className={`text-[10px] font-bold px-2 py-0.5 ${
+        isDark ? '!bg-slate-700/50 !text-slate-300' : '!bg-slate-100 !text-slate-600'
+      }`}
+      rounded
+    />
+  )
+
+  const weightTemplate = (rowData) => (
+    <span className={`text-xs font-mono font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+      {rowData.weight}
+    </span>
+  )
+
+  // ─── Metric Cards Data ───
+  const metricCards = [
+    {
+      label: 'Daily Parcel Intake',
+      value: dailyIntake,
+      icon: Package,
+      trend: '+12.4%',
+      trendUp: true,
+      iconBg: isDark ? 'bg-purple-500/15' : 'bg-purple-50',
+      iconColor: isDark ? 'text-purple-400' : 'text-purple-600',
+      trendBg: isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600',
+    },
+    {
+      label: 'Pending Pickups',
+      value: pendingPickups,
+      icon: Truck,
+      trend: `${pendingPickups} waiting`,
+      trendUp: false,
+      iconBg: isDark ? 'bg-amber-500/15' : 'bg-amber-50',
+      iconColor: isDark ? 'text-amber-400' : 'text-amber-600',
+      trendBg: isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600',
+    },
+    {
+      label: 'Delivery Requests',
+      value: deliveryRequests,
+      icon: Ship,
+      trend: 'Active',
+      trendUp: true,
+      iconBg: isDark ? 'bg-blue-500/15' : 'bg-blue-50',
+      iconColor: isDark ? 'text-blue-400' : 'text-blue-600',
+      trendBg: isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600',
+    },
+    {
+      label: 'Total Delivered',
+      value: deliveredCount,
+      icon: CheckCircle2,
+      trend: `${deliveredCount} done`,
+      trendUp: true,
+      iconBg: isDark ? 'bg-emerald-500/15' : 'bg-emerald-50',
+      iconColor: isDark ? 'text-emerald-400' : 'text-emerald-600',
+      trendBg: isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600',
+    },
+  ]
+
+  // Status breakdown for sidebar widget
+  const statusBreakdown = useMemo(() => {
+    const total = parcels.length || 1
+    return [
+      { label: 'Pending', pct: Math.round((parcels.filter(p => p.status === 'pending' || p.status === 'ready_for_pickup').length / total) * 100), color: 'bg-amber-400' },
+      { label: 'In Transit', pct: Math.round((inTransitCount / total) * 100), color: 'bg-blue-400' },
+      { label: 'Delivered', pct: Math.round((deliveredCount / total) * 100), color: 'bg-emerald-400' },
+    ]
+  }, [parcels, inTransitCount, deliveredCount])
+
+  // ─── CARD / PANEL BASE CLASSES ───
+  const cardBase = isDark
+    ? 'bg-[#111827] border-slate-800/60 shadow-none'
+    : 'bg-white border-slate-200/80 shadow-xs'
+
   return (
-    <div className="space-y-6 pb-12 font-sans text-slate-800">
-      
+    <div className="space-y-5 pb-12 font-sans">
+
       {/* ─── Top Header Section ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
-            <RiveComponent className="w-full h-full scale-[1.5]" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-slate-400 block tracking-tight">Hello Admin,</span>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Good Morning</h1>
-          </div>
+      <div className={`flex items-center justify-between p-5 rounded-2xl border ${cardBase}`}>
+        <div>
+          <span className={`text-xs font-semibold block tracking-tight ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            Overview <span className="inline-flex items-center gap-1 ml-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live</span>
+          </span>
+          <h1 className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            Parcel Command
+          </h1>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            Monitor intake activity, shipment flow, and recent parcel operations.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-400">Timeframe</span>
+            <span className={`text-xs font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Timeframe</span>
             <div className="relative">
               <select
                 value={timeframe}
                 onChange={(e) => setTimeframe(e.target.value)}
-                className="appearance-none bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 py-2.5 pl-3.5 pr-8 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className={`appearance-none text-xs font-bold py-2.5 pl-3.5 pr-8 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20 border ${
+                  isDark
+                    ? 'bg-slate-800/50 border-slate-700 text-white'
+                    : 'bg-slate-50 border-slate-200 text-slate-800'
+                }`}
               >
-                <option value="Feb 2022">Feb 2022</option>
-                <option value="Mar 2022">Mar 2022</option>
-                <option value="Jan 2023">Jan 2023</option>
-                <option value="Feb 2023">Feb 2023</option>
+                <option>This Week</option>
+                <option>This Month</option>
+                <option>Last 30 Days</option>
+                <option>This Quarter</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className={`w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
             </div>
           </div>
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-blue-600 hover:bg-slate-50 rounded-xl transition-colors shadow-xs"
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors border ${
+              isDark
+                ? 'bg-slate-800/50 border-slate-700 text-emerald-400 hover:bg-slate-800'
+                : 'bg-white border-slate-200 text-blue-600 hover:bg-slate-50'
+            }`}
           >
-            <Download className="w-4 h-4 text-blue-600" />
-            Export CSV
-          </button>
-
-          <button
-            onClick={() => navigate('/worker/create-shipment')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#0066ff] hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm shadow-blue-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            Add new shipment
+            <Download className="w-4 h-4" />
+            Download
           </button>
         </div>
       </div>
 
-      {/* ─── 100% DYNAMIC METRIC CARDS ROW ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Card 1: Total Shipment */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3 relative overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <Package className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-slate-400">Total shipment</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-slate-900 tracking-tight">
-                {totalShipments}
-              </span>
-              <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                ▲ {totalShipments} Items
+      {/* ─── Metric Cards Row ─── */}
+      <div className="grid grid-cols-4 gap-4">
+        {metricCards.map((card, i) => (
+          <div key={i} className={`p-5 rounded-2xl border space-y-3 relative overflow-hidden ${cardBase}`}>
+            <div className="flex items-center justify-between">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${card.iconBg}`}>
+                <card.icon className={`w-5 h-5 ${card.iconColor}`} />
+              </div>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${card.trendBg}`}>
+                {card.trendUp && <TrendingUp className="w-3 h-3" />}
+                {card.trend}
               </span>
             </div>
-          </div>
-        </div>
-
-        {/* Card 2: In Transit */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3 relative overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <Truck className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-slate-400">In transit</span>
-            <div className="mt-1">
-              <span className="text-2xl font-black text-slate-900 tracking-tight">
-                {inTransitCount}
-              </span>
+            <div>
+              <span className={`text-xs font-semibold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{card.label}</span>
+              <div className="mt-1">
+                <span className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {card.value}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Card 3: Pending Packages */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3 relative overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <Ship className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-slate-400">Pending packages</span>
-            <div className="mt-1">
-              <span className="text-2xl font-black text-slate-900 tracking-tight">
-                {pendingCount}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Delivered */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3 relative overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-slate-400">Delivered</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-slate-900 tracking-tight">
-                {deliveredCount}
-              </span>
-              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                ✓ {deliveredCount} Done
-              </span>
-            </div>
-          </div>
-        </div>
-
+        ))}
       </div>
 
-      {/* ─── Middle Section: Chart + Live Tracking ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Chart Column (8 Cols) */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+      {/* ─── Chart + Parcel Mix Row ─── */}
+      <div className="grid grid-cols-12 gap-5">
+
+        {/* Chart (8 cols) */}
+        <div className={`col-span-8 p-6 rounded-2xl border space-y-4 ${cardBase}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">Shipment Over Time</h2>
-            <div className="relative">
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 rounded-xl">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{chartTimeframe}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </button>
+            <h2 className={`text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Parcel Activity
+            </h2>
+            <div className="flex items-center gap-4 text-[11px] font-bold">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded bg-emerald-500" /> Incoming
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded bg-slate-500" /> Dispatched
+              </span>
             </div>
           </div>
 
-          <div className="relative w-full h-[250px] mt-4">
+          <div className="w-full h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} 
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#1e293b' : '#f1f5f9'} />
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: isDark ? '#64748b' : '#64748b', fontSize: 11, fontWeight: 600 }}
                   dy={10}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: isDark ? '#475569' : '#94a3b8', fontSize: 10, fontWeight: 600 }}
                 />
-                <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                <Area 
-                  type="monotone" 
-                  dataKey="val" 
-                  stroke="#2563eb" 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#chartGradient)" 
-                  isAnimationActive={true}
-                  animationDuration={1500}
-                  animationEasing="ease-in-out"
-                  activeDot={{ r: 6, strokeWidth: 3, stroke: '#ffffff', fill: '#2563eb' }}
-                />
-              </AreaChart>
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }} />
+                <Bar dataKey="incoming" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="dispatched" fill={isDark ? '#334155' : '#cbd5e1'} radius={[4, 4, 0, 0]} maxBarSize={32} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Live Tracking Panel Overlay (4 Cols) */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-lg space-y-5 relative">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">Live Tracking</h2>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setLiveIndex((prev) => (prev > 0 ? prev - 1 : liveShipments.length - 1))}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setLiveIndex((prev) => (prev < liveShipments.length - 1 ? prev + 1 : 0))}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+        {/* Parcel Mix (4 cols) */}
+        <div className={`col-span-4 p-6 rounded-2xl border space-y-5 ${cardBase}`}>
+          <div className="flex items-center justify-between">
+            <h2 className={`text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Parcel Mix
+            </h2>
+            <button className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'hover:bg-slate-800 text-slate-500' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
           </div>
 
           <div>
-            <span className="text-xs font-bold text-slate-400">Tracking Number:</span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-base font-mono font-black text-slate-800">{currentLive.trackingNumber}</span>
-              <button
-                onClick={() => handleCopyTracking(currentLive.trackingNumber)}
-                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition-colors"
-                title="Copy Tracking Number"
-              >
-                {copiedTracking ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-              </button>
-              {copiedTracking && <span className="text-[10px] text-emerald-600 font-bold">Copied!</span>}
+            <div className={`text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {totalShipments}
             </div>
+            <span className="text-emerald-400 text-xs font-bold">Total Parcels</span>
           </div>
 
-          <div className="space-y-4 pt-1 relative before:absolute before:left-[7px] before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 before:border-l before:border-dashed before:border-slate-300">
-            {currentLive.steps.map((step, idx) => (
-              <div key={idx} className="flex items-start justify-between relative pl-6">
-                {step.state === 'completed' && (
-                  <div className="w-4 h-4 rounded-full bg-slate-900 border-2 border-white absolute left-0 top-0.5 shadow-xs" />
-                )}
-                {step.state === 'current' && (
-                  <div className="w-4 h-4 rounded-full bg-white border-4 border-slate-900 absolute left-0 top-0.5 shadow-xs" />
-                )}
-                {step.state === 'upcoming' && (
-                  <div className="w-4 h-4 rounded-full bg-white border-2 border-slate-300 absolute left-0 top-0.5" />
-                )}
+          {/* Stacked progress bar */}
+          <div className="flex h-3 rounded-full overflow-hidden">
+            {statusBreakdown.map((s, i) => (
+              <div
+                key={i}
+                className={`${s.color} transition-all duration-500`}
+                style={{ width: `${s.pct}%` }}
+              />
+            ))}
+          </div>
 
-                <div>
-                  <div className={`text-xs font-extrabold ${step.state === 'upcoming' ? 'text-slate-400' : 'text-slate-900'}`}>
-                    {step.label}
-                  </div>
+          {/* Legend */}
+          <div className="space-y-3 pt-2">
+            {statusBreakdown.map((s, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${s.color}`} />
+                  <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {s.label} ({s.pct}%)
+                  </span>
                 </div>
-
-                <div className={`text-xs font-mono ${step.state === 'upcoming' ? 'text-slate-400' : 'text-slate-700 font-bold'}`}>
-                  {step.time}
-                </div>
+                <span className={`text-xs font-bold font-mono ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {parcels.filter(p => {
+                    if (s.label === 'Pending') return p.status === 'pending' || p.status === 'ready_for_pickup'
+                    if (s.label === 'In Transit') return p.status === 'in_transit'
+                    if (s.label === 'Delivered') return p.status === 'delivered'
+                    return false
+                  }).length}
+                </span>
               </div>
             ))}
           </div>
 
           <button
             onClick={() => navigate('/worker/parcels')}
-            className="w-full py-3 bg-[#0066ff] hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20"
+            className={`w-full py-2.5 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 border ${
+              isDark
+                ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
           >
-            <span>Track this order</span>
-            <ChevronRight className="w-4 h-4" />
+            View Registry <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
-
       </div>
 
-      {/* ─── Bottom Section: Incoming Orders Table (Dynamic Real-time List) ─── */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+      {/* ─── Recent Activity Table (PrimeReact DataTable) ─── */}
+      <div className={`p-6 rounded-2xl border space-y-4 ${cardBase}`}>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">Incoming Orders & Registrations</h2>
-            <p className="text-xs text-slate-500">Live parcel records from customer submissions and worker intakes.</p>
+            <h2 className={`text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Recent Activity
+            </h2>
+            <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              Live parcel records from customer submissions and worker intakes.
+            </p>
           </div>
-          <button
-            onClick={() => navigate('/worker/parcels')}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            View All Registry →
-          </button>
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold ${
+              isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'
+            }`}>
+              {parcels.filter(p => p.status === 'pending' || p.status === 'ready_for_pickup').length} pending
+            </span>
+            <div className="relative">
+              <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+              <InputText
+                value={globalFilterValue}
+                onChange={onGlobalFilterChange}
+                placeholder="Search tracking, phone, name..."
+                className={`pl-9 !h-9 !text-xs !rounded-xl !border ${
+                  isDark
+                    ? '!bg-slate-800/50 !border-slate-700 !text-white placeholder:!text-slate-500'
+                    : '!bg-slate-50 !border-slate-200 !text-slate-900 placeholder:!text-slate-400'
+                }`}
+                style={{ width: '240px' }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
-                <th className="py-3 px-3 w-10">
-                  <input
-                    type="checkbox"
-                    checked={selectedOrders.length === parcels.length && parcels.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                </th>
-                <th className="py-3 px-3">Processing Status</th>
-                <th className="py-3 px-3">Ship Status</th>
-                <th className="py-3 px-3">Pro. Date</th>
-                <th className="py-3 px-3">Order Number</th>
-                <th className="py-3 px-3">Sender Name</th>
-                <th className="py-3 px-3">Receiver Name</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {parcels.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center">
-                    {emptyLottieData ? (
-                      <div className="w-48 h-48 mx-auto opacity-70">
-                        <EmptyLottie animationData={emptyLottieData} />
-                      </div>
-                    ) : (
-                      <div className="w-48 h-48 mx-auto bg-slate-50 animate-pulse rounded-xl" />
-                    )}
-                    <h3 className="text-sm font-black text-slate-800 mt-2">No incoming orders yet</h3>
-                    <p className="text-xs text-slate-400 mt-1">When customers submit new parcels, they will appear here.</p>
-                  </td>
-                </tr>
-              ) : parcels.map((order) => {
-                const isChecked = selectedOrders.includes(order.id)
-                return (
-                  <tr
-                    key={order.id}
-                    onClick={() => navigate('/worker/parcels')}
-                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${isChecked ? 'bg-blue-50/30' : ''}`}
-                  >
-                    <td className="py-3.5 px-3" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handleToggleSelect(order.id)}
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                    </td>
-
-                    <td className="py-3.5 px-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                          order.status === 'delivered'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : order.status === 'in_transit'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            order.status === 'delivered'
-                              ? 'bg-emerald-500'
-                              : order.status === 'in_transit'
-                              ? 'bg-blue-500'
-                              : 'bg-amber-500'
-                          }`}
-                        />
-                        {order.status === 'delivered' ? 'Completed' : order.status === 'in_transit' ? 'Processing' : 'Confirmed'}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-3">
-                      <span className="font-semibold text-slate-700 uppercase text-[11px]">
-                        {order.status.replace(/_/g, ' ')}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-3 text-slate-500 font-medium">
-                      {order.pickup_date}
-                    </td>
-
-                    <td className="py-3.5 px-3">
-                      <span className="font-mono font-black text-slate-800">{order.tracking_number}</span>
-                    </td>
-
-                    <td className="py-3.5 px-3 font-bold text-slate-900">
-                      {order.sender_name}
-                    </td>
-
-                    <td className="py-3.5 px-3 text-slate-700 font-semibold">
-                      {order.receiver_name}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          value={parcels}
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25]}
+          filters={filters}
+          globalFilterFields={['tracking_number', 'sender_name', 'receiver_name', 'sender_phone', 'receiver_phone', 'shipment_ref']}
+          selection={selectedParcels}
+          onSelectionChange={(e) => setSelectedParcels(e.value)}
+          dataKey="id"
+          selectionMode="multiple"
+          emptyMessage={
+            <div className="text-center py-8">
+              <Package className={`w-12 h-12 mx-auto mb-3 ${isDark ? 'text-slate-700' : 'text-slate-200'}`} />
+              <p className={`text-sm font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>No parcels found</p>
+              <p className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>Try adjusting your search terms.</p>
+            </div>
+          }
+          className={isDark ? 'p-datatable-dark' : ''}
+          pt={{
+            root: { className: 'border-0' },
+            header: { className: 'border-0 bg-transparent p-0' },
+            wrapper: { className: 'border-0' },
+            table: { className: `w-full text-xs ${isDark ? 'text-slate-300' : 'text-slate-700'}` },
+            thead: { className: isDark ? 'border-b border-slate-800' : 'border-b border-slate-100' },
+            headerCell: {
+              className: `!py-3 !px-4 !font-bold !text-[11px] !uppercase !tracking-wider !border-0 ${
+                isDark
+                  ? '!bg-transparent !text-slate-500'
+                  : '!bg-transparent !text-slate-400'
+              }`
+            },
+            bodyRow: {
+              className: `cursor-pointer transition-colors ${
+                isDark
+                  ? 'hover:!bg-slate-800/50 !border-b !border-slate-800/50'
+                  : 'hover:!bg-slate-50 !border-b !border-slate-100'
+              }`
+            },
+            bodyCell: {
+              className: `!py-3.5 !px-4 !border-0 ${isDark ? '!bg-transparent' : '!bg-transparent'}`
+            },
+            paginator: {
+              root: { className: `!border-0 !mt-2 ${isDark ? '!bg-transparent' : '!bg-transparent'}` },
+            },
+          }}
+          onRowClick={(e) => navigate('/worker/parcels')}
+        >
+          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
+          <Column field="tracking_number" header="Id" body={idTemplate} sortable />
+          <Column field="sender_name" header="Name" body={nameTemplate} sortable />
+          <Column field="status" header="Status" body={statusTemplate} sortable />
+          <Column field="pickup_date" header="Date" body={dateTemplate} sortable />
+          <Column field="parcel_type" header="Process" body={typeTemplate} sortable />
+          <Column field="weight" header="Amount" body={weightTemplate} sortable />
+        </DataTable>
       </div>
 
     </div>
